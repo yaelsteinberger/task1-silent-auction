@@ -18,7 +18,6 @@ import services.authenticate.HttpAuthApi;
 import services.authenticate.HttpStatusCode;
 import usersList.AbstractUsersList;
 import usersList.StatusCode;
-import usersList.UserListItem;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,11 +66,10 @@ public class ServerReadChannel implements ReadChannel {
                 case Opcodes.LOGIN_CLIENT:{
                     logger.debug("Handling read command: LOGIN_USER");
                     User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
-                    UserListItem userToAdd = new UserListItem(
+                    User userToAdd = new User(
                             user.getUserName(),
                             user.getFirstName(),
-                            user.getLastName(),
-                            socket
+                            user.getLastName()
                     );
                     statusCode = this.usersList.loginUser(userToAdd);
 
@@ -87,11 +85,10 @@ public class ServerReadChannel implements ReadChannel {
                 case Opcodes.REGISTER_CLIENT:{
                     logger.debug("Handling read command: REGISTER_CLIENT");
                     User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
-                    UserListItem userToAdd = new UserListItem(
+                    User userToAdd = new User(
                             user.getUserName(),
                             user.getFirstName(),
-                            user.getLastName(),
-                            socket
+                            user.getLastName()
                     );
                     HttpAuthApi httpApi = new HttpAuthApi();
                     handleRegisterClient(httpApi.registerUser(user));
@@ -106,8 +103,6 @@ public class ServerReadChannel implements ReadChannel {
 
     @Override
     public void run() {
-
-
         try {
             /* Before accepting communication from a client, the client must login/signup to the system */
             if(authenticateClient()){
@@ -146,14 +141,14 @@ public class ServerReadChannel implements ReadChannel {
         while(!isClientAuth){
             /* wait for client response */
             read();
-            isClientAuth = (handleRead() == StatusCode.SUCCESS);
+            isClientAuth = ((handleRead() == StatusCode.SUCCESS));
         }
         return isClientAuth;
     }
 
     private void handleNotExistAccount() throws IOException {
         logger.debug("Sending message to client that account doesn't exist");
-        String message = "No account exists, please register";
+        String message = "No account exists, please register - type 'reg' ";
         sendMessageToClient(Opcodes.REGISTER_CLIENT, message);
     }
 

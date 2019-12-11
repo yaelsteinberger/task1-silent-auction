@@ -47,7 +47,7 @@ public class UsersList extends AbstractUsersList {
     }
 
     @Override
-    public int loginUser(UserListItem user) {
+    public int loginUser(User user) {
         int statusCode = StatusCode.INVALID_USERNAME;
 
         User authUser = new User(

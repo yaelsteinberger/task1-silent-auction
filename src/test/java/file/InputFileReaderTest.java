@@ -1,13 +1,11 @@
 package file;
 
-import auctionList.AuctionItem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import file.reader.InputFileReader;
 import file.reader.InputFileReaderFactory;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.isA;
@@ -75,9 +73,6 @@ public class InputFileReaderTest {
 
         Stream output = fileReaderCsv.readFile();
         Object[] auctionItems = output.toArray();
-
-
-        System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(auctionItems));
 
         //Then
         assertThat(fileReaderCsv, isA(CsvInputFileReader.class ));

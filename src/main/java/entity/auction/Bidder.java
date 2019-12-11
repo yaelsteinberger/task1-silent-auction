@@ -1,23 +1,23 @@
-package auctionList;
+package entity.auction;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import entity.User;
 
 import java.util.Date;
 
-public class BidderItem {
+public class Bidder {
     private final Date timeStamp;
     private final User bidder;
     private final Long bidderValue;
-//    private static final Object mutex = new Object();
 
-    public BidderItem(User bidder, Long bidderValue) {
-
-//        synchronized(mutex){
+    @JsonCreator
+    public Bidder(
+            @JsonProperty("bidder") User bidder,
+            @JsonProperty("bidderValue") Long bidderValue) {
             this.timeStamp = new Date();
             this.bidder = bidder;
             this.bidderValue = bidderValue;
-//        }
-
     }
 
     public User getBidder() {

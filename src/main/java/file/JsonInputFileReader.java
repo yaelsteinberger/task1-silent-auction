@@ -4,6 +4,7 @@ import auctionList.AuctionItem;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //import entity.FullName;
+import entity.auction.Item;
 import file.reader.InputFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +41,9 @@ public class JsonInputFileReader implements InputFileReader {
         logger.info("Read json file: Done!");
 
         // Deserialization for array json:
-        TypeReference reference = new TypeReference<List<AuctionItem>>(){};
+        TypeReference reference = new TypeReference<List<Item>>(){};
 
-        List<AuctionItem> auctionItems = (List<AuctionItem>)objMapper.readValue(input,reference);
+        List<Item> auctionItems = (List<Item>)objMapper.readValue(input,reference);
         logger.info("Parsing json lines");
 
         return auctionItems.stream();

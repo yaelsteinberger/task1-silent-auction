@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
 import org.junit.Before;
 import org.junit.Test;
-import server.ServerProperties;
 import usersList.mock.UsersListMockCalls;
 
 import java.util.ArrayList;
@@ -23,10 +22,10 @@ public class UsersListTest {
     public void setup(){
         //Given
         usersList = new UsersListMockCalls();
-        users = new ArrayList<UserListItem>(){{
-            add(new UserListItem("username1","FirstName1","LastName1", null));
-            add(new UserListItem("username2","FirstName2","LastName2", null));
-            add(new UserListItem("username3","FirstName3","LastName3", null));
+        users = new ArrayList<User>(){{
+            add(new User("username1","FirstName1","LastName1"));
+            add(new User("username2","FirstName2","LastName2"));
+            add(new User("username3","FirstName3","LastName3"));
         }};
     }
 
@@ -35,15 +34,14 @@ public class UsersListTest {
 
         //Given
         usersList.setAuth(StatusCode.SUCCESS);
-        UserListItem user = new UserListItem(
+        User user = new User(
                 "username4",
                 "FirstName4",
-                "LastName4",
-                null);
+                "LastName4");
 
         //When
         usersList.loginUser(user);
-        User userInList = usersList.findByUserName(user.getUserName());
+        entity.User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
         assertThat(userInList, is(user));
@@ -53,16 +51,15 @@ public class UsersListTest {
     public void loginUserFailTest() throws JsonProcessingException {
 
         //Given
-        UserListItem user = new UserListItem(
+        User user = new User(
                 "username5",
                 "FirstName5",
-                "LastName5",
-                null);
+                "LastName5");
         usersList.setAuth(StatusCode.FATAL_ERROR);
 
         //When
         usersList.loginUser(user);
-        User userInList = usersList.findByUserName(user.getUserName());
+        entity.User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
         assertThat(userInList, is(nullValue()));
@@ -77,12 +74,12 @@ public class UsersListTest {
 
         //When
         users.forEach(user -> {
-            usersList.loginUser((UserListItem) user);
+            usersList.loginUser((User) user);
         });
         usersList.removeByUserName(userNameToRemove);
 
         //Then
-        User user = usersList.findByUserName(userNameToRemove);
+        entity.User user = usersList.findByUserName(userNameToRemove);
         assertThat(user, is(nullValue()));
     }
 }

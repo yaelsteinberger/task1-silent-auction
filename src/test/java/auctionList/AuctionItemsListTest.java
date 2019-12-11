@@ -2,6 +2,7 @@ package auctionList;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import entity.auction.Item;
 import file.JsonInputFileReader;
 import file.reader.InputFileReader;
 import file.reader.InputFileReaderFactory;
@@ -19,6 +20,8 @@ public class AuctionItemsListTest {
     @Test
     /* TODO: MOCK JSON INPUT INSTEAD OF READING FILE */
     public void getAuctionItemsListTest() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
         //Given
         String filePath = "auctionItems.json";
 
@@ -26,9 +29,9 @@ public class AuctionItemsListTest {
         InputFileReader fileReader = InputFileReaderFactory.of(filePath);
         JsonInputFileReader fileReaderJson = ((JsonInputFileReader)fileReader);
 
-        Stream fileStream = fileReaderJson.readFile();
+        Stream<Item> fileStream = fileReaderJson.readFile();
 
-        AuctionItemsList auctionItemsList = new AuctionItemsList(fileStream);
+        AuctionItemsList auctionItemsList = new AuctionItemsList(fileStream.map(AuctionItem::new));
 
         System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(auctionItemsList));
 
