@@ -1,5 +1,7 @@
 package server;
 
+import auctionList.AuctionItem;
+import auctionList.AuctionItemsList;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +10,7 @@ import entity.User;
 import entity.channels.ReadChannel;
 import entity.command.Command;
 import entity.command.Opcodes;
+import entity.command.schemas.AddBidMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
 import entity.response.AbstractResponse;
@@ -23,23 +26,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
 
 
 public class ServerReadChannel implements ReadChannel {
     private final static Logger logger = LoggerFactory.getLogger(ServerReadChannel.class);
 
     private final Socket socket;
-    private String userName;
+    private final AuctionItemsList auctionItemsList;
+    private User user;
     private AbstractUsersList usersList;
-    private ObjectMapper objectMapper;
     private Command readCommand;
-    private Command writeCommand;
+    private ObjectMapper objectMapper;
 
+    public ServerReadChannel(
+            Socket socket,
+            AbstractUsersList usersList,
+            AuctionItemsList auctionItemsList,
+            ExecutorService threadsAuctionItemsPool
+    ){
 
-
-    public ServerReadChannel(Socket socket, AbstractUsersList usersList ){
+        this.auctionItemsList = auctionItemsList;
         this.usersList = usersList;
         this.socket = socket;
+
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         this.objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
@@ -66,17 +76,12 @@ public class ServerReadChannel implements ReadChannel {
                 case Opcodes.LOGIN_CLIENT:{
                     logger.debug("Handling read command: LOGIN_USER");
                     User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
-                    User userToAdd = new User(
-                            user.getUserName(),
-                            user.getFirstName(),
-                            user.getLastName()
-                    );
-                    statusCode = this.usersList.loginUser(userToAdd);
+                    statusCode = this.usersList.loginUser(user);
 
                     if(statusCode == StatusCode.NO_ACCOUNT_EXISTS){
                         handleNotExistAccount();
                     }else if(statusCode == StatusCode.SUCCESS){
-                        this.userName = user.getUserName();
+                        this.user = user;
                     }
 
                     break;
@@ -85,17 +90,32 @@ public class ServerReadChannel implements ReadChannel {
                 case Opcodes.REGISTER_CLIENT:{
                     logger.debug("Handling read command: REGISTER_CLIENT");
                     User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
-                    User userToAdd = new User(
-                            user.getUserName(),
-                            user.getFirstName(),
-                            user.getLastName()
-                    );
                     HttpAuthApi httpApi = new HttpAuthApi();
                     handleRegisterClient(httpApi.registerUser(user));
                     break;
                 }
-            }
 
+                case Opcodes.GET_AUCTION_LIST:{
+                    logger.debug("Handling read command: GET_AUCTION_LIST");
+
+                    String message = auctionItemsList.itemsListToPrettyString();
+                    sendMessageToClient(Opcodes.AUCTION_LIST, message);
+                    break;
+                }
+
+                case Opcodes.ADD_BID:{
+                    logger.debug("Handling read command: ADD_BID");
+                    AddBidMessage addBid = (AddBidMessage)this.readCommand.getMessage();
+                    AuctionItem auctionItem = auctionItemsList.findById(addBid.getAuctionItemId());
+                    auctionItem.addBidder(user,addBid.getBidValue());
+                    break;
+                }
+
+                case Opcodes.WINNER_ANNOUNCEMENT:{
+                    //TODO
+                    break;
+                }
+            }
         }
 
         return statusCode;
@@ -112,14 +132,14 @@ public class ServerReadChannel implements ReadChannel {
                 }
             }
             else{
-                logger.error("User {} Cannot be authenticated", userName);
+                logger.error("User {} Cannot be authenticated", user.getUserName());
             }
         }catch(IOException e){
             logger.error("ERROR: {}", e.getMessage());
             e.printStackTrace();
         } finally{
-            logger.info("User {} has left the Chat", userName);
-            usersList.removeByUserName(userName);
+            logger.info("User {} has left the Chat", user.getUserName());
+            usersList.removeByUserName(user.getUserName());
 
             try {socket.close();}
             catch (IOException e) {logger.error("ERROR: {}", e.getMessage());}
@@ -131,12 +151,8 @@ public class ServerReadChannel implements ReadChannel {
         /* When client is connected send a message to login or signup */
         boolean isClientAuth = false;
 
-        logger.debug("Sending request to client to login/signup");
-        String message = "WELCOME TO SILENT AUCTION\n" +
-                "Please login or register if you don't have an account: \n" +
-                "-> To login type \"login\" and press Enter\n" +
-                "-> To register type \"reg\" and press Enter";
-        sendMessageToClient(Opcodes.WELCOME, message);
+        logger.debug("Sending welcome message to client");
+        sendMessageToClient(Opcodes.WELCOME, getWelcomeMessage());
 
         while(!isClientAuth){
             /* wait for client response */
@@ -153,7 +169,7 @@ public class ServerReadChannel implements ReadChannel {
     }
 
     private void handleRegisterClient(AbstractResponse response) throws IOException {
-        int statusCode = StatusCode.SUCCESS;
+        int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
 
         if(response.isError()){
             ResponseError errorResponse = (ResponseError) response;
@@ -168,14 +184,25 @@ public class ServerReadChannel implements ReadChannel {
                     break;
                 }
             }
+        }else{
+            logger.debug("Registration successful - Sending welcome message to client");
+            sendMessageToClient(Opcodes.WELCOME, getWelcomeMessage());
+
         }
     }
 
     private void sendMessageToClient(int opcode, String message) throws IOException {
         MessageToClientMessage messageToClient = new MessageToClientMessage(message);
-        this.writeCommand = new Command(opcode, messageToClient);
+        Command writeCommand = new Command(opcode, messageToClient);
         OutputStream writer = socket.getOutputStream();
-        this.objectMapper.writeValue(writer,this.writeCommand);
+        this.objectMapper.writeValue(writer,writeCommand);
+    }
+
+    private String getWelcomeMessage(){
+        return "WELCOME TO SILENT AUCTION\n" +
+                "Please login or register if you don't have an account: \n" +
+                "-> To login type \"login\" and press Enter\n" +
+                "-> To register type \"reg\" and press Enter";
     }
 }
 

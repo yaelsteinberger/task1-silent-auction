@@ -11,11 +11,15 @@ import org.junit.Test;
 import server.AdminUser;
 
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,12 +53,10 @@ public class AuctionItemTest {
             add(new Bidder((User)users.get(0),200L));
             add(new Bidder((User)users.get(2),160L));
         }};
-
-
     }
 
     @Test
-    public void addBidderTest() throws JsonProcessingException {
+    public void addBidderTest() throws IOException {
         //Given
         bidders.forEach(bidder -> {
             auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
@@ -63,9 +65,10 @@ public class AuctionItemTest {
         });
 
         //When
-        Bidder[] biddersList = mapper.convertValue(auctionItem.getBiddersList(),Bidder[].class);
-        String firstBidderUserName = biddersList[0].getBidder().getUserName();
-        int listSize = biddersList.length;
+        LinkedBlockingDeque<Bidder> biddersList = auctionItem.getBiddersList();
+
+        String firstBidderUserName = biddersList.getFirst().getBidder().getUserName();
+        int listSize = biddersList.size();
 
         //Then
         String expectedFirstBidder = AdminUser.ADMIN.getUserName();
@@ -74,28 +77,6 @@ public class AuctionItemTest {
         assertThat(listSize, is(expectedSize));
     }
 
-
-    @Test
-    public void bumpPriceTest() throws InterruptedException {
-        //Given
-        bidders.forEach(bidder -> {
-            auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
-            try {Thread.sleep(1);}
-            catch (InterruptedException e) {e.printStackTrace();}
-        });
-
-        //When
-        Long maxValue = auctionItem.getBiddersList().peek().getBidderValue();
-        auctionItem.bumpPrice(maxValue + auctionItem.getItemData().getBidIncrement());
-
-        //Then
-        Bidder bumpPriceBidder = auctionItem.getBiddersList().peek();
-        String expectedFirstBidder = AdminUser.ADMIN.getUserName();
-        Long expectedBumpedPrice = 220L;
-
-        assertThat(bumpPriceBidder.getBidder().getUserName(), is(expectedFirstBidder));
-        assertThat(bumpPriceBidder.getBidderValue(), is(expectedBumpedPrice));
-    }
 
     @Test
     public void incrementBumpPriceTest() throws InterruptedException {
@@ -110,7 +91,7 @@ public class AuctionItemTest {
         auctionItem.incrementBumpPrice(3L);
 
         //Then
-        Bidder bumpPriceBidder = auctionItem.getBiddersList().peek();
+        Bidder bumpPriceBidder = auctionItem.getBiddersList().peekLast();
         String expectedFirstBidder = AdminUser.ADMIN.getUserName();
         Long expectedBumpedPrice = 260L;
 
