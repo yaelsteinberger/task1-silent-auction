@@ -34,11 +34,9 @@ public class Server {
     private final static String propFilePath = "serverConfig.properties";
 
     private static ExecutorService threadsClientsPool = Executors.newFixedThreadPool(THREADS_NUM);
-    private static ExecutorService threadsAuctionItemsPool = Executors.newCachedThreadPool();
 
 
-
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
         ServerProperties.readConfigPropertiesFile(propFilePath);
         props = ServerProperties.getProperties();

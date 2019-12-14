@@ -1,4 +1,7 @@
-package entity.response;
+package entity.httpResponse;
+
+import javax.annotation.Nullable;
+import java.util.Map;
 
 public class ResponseBasic extends AbstractResponse {
 
@@ -6,17 +9,22 @@ public class ResponseBasic extends AbstractResponse {
     private String timestamp;
     private String path;
     private Boolean isError;
+    @Nullable
+    private Map data;
+
 
 
     public ResponseBasic(
             String timeStamp,
             int status,
             String path,
+            Map data,
             boolean isError
     )  {
         this.timestamp = timeStamp;
         this.status = status;
         this.path = path;
+        this.data = data;
         this.isError = isError;
     }
 
@@ -30,6 +38,11 @@ public class ResponseBasic extends AbstractResponse {
 
     public String getPath() {
         return path;
+    }
+
+    @Nullable
+    public Map getData() {
+        return data;
     }
 
     @Override

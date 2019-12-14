@@ -1,4 +1,4 @@
-package services.authenticate;
+package authenticate;
 
 public interface HttpStatusCode {
     int OK = 200;

@@ -13,12 +13,12 @@ import entity.command.Opcodes;
 import entity.command.schemas.AddBidMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
-import entity.response.AbstractResponse;
-import entity.response.ResponseError;
+import entity.httpResponse.AbstractResponse;
+import entity.httpResponse.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import services.authenticate.HttpAuthApi;
-import services.authenticate.HttpStatusCode;
+import authenticate.HttpAuthApi;
+import authenticate.HttpStatusCode;
 import usersList.AbstractUsersList;
 import usersList.StatusCode;
 
@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
 
 
 public class ServerReadChannel implements ReadChannel {
@@ -36,14 +35,13 @@ public class ServerReadChannel implements ReadChannel {
     private final AuctionItemsList auctionItemsList;
     private User user;
     private AbstractUsersList usersList;
-    private Command readCommand;
+//    private Command readCommand;
     private ObjectMapper objectMapper;
 
     public ServerReadChannel(
             Socket socket,
             AbstractUsersList usersList,
-            AuctionItemsList auctionItemsList,
-            ExecutorService threadsAuctionItemsPool
+            AuctionItemsList auctionItemsList
     ){
 
         this.auctionItemsList = auctionItemsList;
@@ -56,26 +54,28 @@ public class ServerReadChannel implements ReadChannel {
     }
 
     @Override
-    public void read() throws IOException {
+    public Command read() throws IOException {
         logger.debug("Waiting for command from client...");
         InputStream reader = socket.getInputStream();
-        this.readCommand = objectMapper.readValue(reader,Command.class);
-        logger.debug("Read command from client: {}",this.readCommand.getOpcode());
+        Command readCommand = objectMapper.readValue(reader,Command.class);
+        logger.debug("Read command from client: {}",readCommand.getOpcode());
+
+        return readCommand;
     }
 
     @Override
-    public int handleRead() throws IOException {
+    public int handleRead(Command readCommand) throws IOException {
         int statusCode = StatusCode.FATAL_ERROR;
 
-        if(this.readCommand != null){
-            int opcode = this.readCommand.getOpcode();
+        if(readCommand != null){
+            int opcode = readCommand.getOpcode();
 
             logger.debug("Handling read command: {}", opcode);
 
             switch(opcode){
                 case Opcodes.LOGIN_CLIENT:{
                     logger.debug("Handling read command: LOGIN_USER");
-                    User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
+                    User user = ((LoginUserMessage)readCommand.getMessage()).getUser();
                     statusCode = this.usersList.loginUser(user);
 
                     if(statusCode == StatusCode.NO_ACCOUNT_EXISTS){
@@ -89,7 +89,7 @@ public class ServerReadChannel implements ReadChannel {
 
                 case Opcodes.REGISTER_CLIENT:{
                     logger.debug("Handling read command: REGISTER_CLIENT");
-                    User user = ((LoginUserMessage)this.readCommand.getMessage()).getUser();
+                    User user = ((LoginUserMessage)readCommand.getMessage()).getUser();
                     HttpAuthApi httpApi = new HttpAuthApi();
                     handleRegisterClient(httpApi.registerUser(user));
                     break;
@@ -105,7 +105,7 @@ public class ServerReadChannel implements ReadChannel {
 
                 case Opcodes.ADD_BID:{
                     logger.debug("Handling read command: ADD_BID");
-                    AddBidMessage addBid = (AddBidMessage)this.readCommand.getMessage();
+                    AddBidMessage addBid = (AddBidMessage)readCommand.getMessage();
                     AuctionItem auctionItem = auctionItemsList.findById(addBid.getAuctionItemId());
                     auctionItem.addBidder(user,addBid.getBidValue());
                     break;
@@ -126,9 +126,12 @@ public class ServerReadChannel implements ReadChannel {
         try {
             /* Before accepting communication from a client, the client must login/signup to the system */
             if(authenticateClient()){
-                while (true) {
-                    read();
-                    handleRead();
+                boolean isRun = true;
+                while (isRun) {
+                    Command readCommand = read();
+                    int statusCode = handleRead(readCommand);
+
+                    isRun = (statusCode == StatusCode.FATAL_ERROR);
                 }
             }
             else{
@@ -156,8 +159,8 @@ public class ServerReadChannel implements ReadChannel {
 
         while(!isClientAuth){
             /* wait for client response */
-            read();
-            isClientAuth = ((handleRead() == StatusCode.SUCCESS));
+            Command readCommand = read();
+            isClientAuth = ((handleRead(readCommand) == StatusCode.SUCCESS));
         }
         return isClientAuth;
     }
@@ -172,7 +175,7 @@ public class ServerReadChannel implements ReadChannel {
         int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
 
         if(response.isError()){
-            ResponseError errorResponse = (ResponseError) response;
+            HttpResponse errorResponse = (HttpResponse) response;
 
             switch (errorResponse.getStatusCode()){
                 case HttpStatusCode.FORBIDDEN: {

@@ -1,11 +1,12 @@
-package services.authenticate;
+package authenticate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
-import entity.response.AbstractResponse;
-import entity.response.ResponseError;
-import entity.response.ResponseSuccess;
+import entity.httpResponse.AbstractResponse;
+import entity.httpResponse.HttpResponse;
+import entity.httpResponse.ResponseError;
+import entity.httpResponse.ResponseSuccess;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ public class HttpAuthApi {
 
     protected AbstractResponse makeCall(Request request){
 
-        AbstractResponse responseObj = null;
+        HttpResponse responseObj = null;
 
         try(Response response = httpClient.newCall(request).execute()) {
 
@@ -39,7 +40,8 @@ public class HttpAuthApi {
                     ResponseError.class;
 
             ObjectMapper mapper = new ObjectMapper();
-            responseObj = (AbstractResponse) mapper.readValue(Objects.requireNonNull(response.body()).string(), responseClass);
+            String responseBody = Objects.requireNonNull(response.body()).string();
+            responseObj = (HttpResponse) mapper.readValue(responseBody, HttpResponse.class);
 
         } catch (IOException e){
             logger.error(e.getMessage());
@@ -53,6 +55,7 @@ public class HttpAuthApi {
 
         String url = authBaseUrl + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
+        System.err.println(url);
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -77,7 +80,4 @@ public class HttpAuthApi {
 
 
     }
-
-
-
 }

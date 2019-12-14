@@ -18,15 +18,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class AuctionItem {
     private final Item itemData;
     private final LinkedBlockingDeque<Bidder> biddersList;
-//    private Stack<Bidder> biddersList;
-
-    private Object lock;
 
     public AuctionItem(Item item) {
         this.itemData = item;
         this.biddersList = new LinkedBlockingDeque<>();
-//        this.biddersList = new Stack<>();
-        lock = new Object();
+
 
         /* bump to start price */
         addBidder(AdminUser.ADMIN, itemData.getStartPrice());

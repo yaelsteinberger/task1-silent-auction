@@ -1,4 +1,4 @@
-package entity.response;
+package entity.httpResponse;
 
 public abstract class AbstractResponse {
 
