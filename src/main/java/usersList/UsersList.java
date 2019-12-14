@@ -1,13 +1,12 @@
 package usersList;
 
 import entity.User;
-import entity.response.ResponseError;
-import entity.response.AbstractResponse;
+import entity.httpResponse.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import services.authenticate.HttpAuthApi;
-import services.authenticate.HttpStatusCode;
-import services.authenticate.InvalidUserNames;
+import authenticate.HttpAuthApi;
+import authenticate.HttpStatusCode;
+import authenticate.InvalidUserNames;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,10 +24,10 @@ public class UsersList extends AbstractUsersList {
         int statusCode = StatusCode.SUCCESS;
 
         HttpAuthApi httpServices = new HttpAuthApi();
-        AbstractResponse responseObject = httpServices.isUserAuth(user.getUserName());
+        HttpResponse responseObject = (HttpResponse) httpServices.isUserAuth(user.getUserName());
 
         if(responseObject.isError()){
-            ResponseError errorMsg = (ResponseError) responseObject;
+            HttpResponse errorMsg = (HttpResponse) responseObject;
             logger.error(errorMsg.getMessage().replace("User", "User " + user.getFirstName() + " " + user.getLastName()));
 
             switch (errorMsg.getStatusCode()){
@@ -47,7 +46,7 @@ public class UsersList extends AbstractUsersList {
     }
 
     @Override
-    public int loginUser(UserListItem user) {
+    public int loginUser(User user) {
         int statusCode = StatusCode.INVALID_USERNAME;
 
         User authUser = new User(

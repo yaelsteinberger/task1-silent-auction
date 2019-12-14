@@ -1,6 +1,4 @@
-package services.authenticate;
-
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+package authenticate;
 
 import java.util.Arrays;
 

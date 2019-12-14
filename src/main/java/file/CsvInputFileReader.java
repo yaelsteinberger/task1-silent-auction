@@ -4,6 +4,7 @@ package file;
 import auctionList.AuctionItem;
 import com.opencsv.CSVParser;
 
+import entity.auction.Item;
 import file.reader.InputFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public class CsvInputFileReader implements InputFileReader {
     }
 
     private Stream convertLineToAuctionItem(Stream<String[]> lines){
-        return lines.map(item -> new AuctionItem(
+        return lines.map(item -> new Item(
                         item[Headers.NAME],
                         item[Headers.DESCRIPTION],
                         Long.valueOf(item[Headers.START_PRICE]),

@@ -1,6 +1,8 @@
 package server;
 
+import auctionList.AuctionItem;
 import auctionList.AuctionItemsList;
+import entity.auction.Item;
 import file.reader.InputFileReader;
 import file.reader.InputFileReaderFactory;
 import usersList.AbstractUsersList;
@@ -16,6 +18,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 /*
@@ -30,10 +33,10 @@ public class Server {
     private static Map auctionItemsList;
     private final static String propFilePath = "serverConfig.properties";
 
-    private static ExecutorService threadsPool = Executors.newFixedThreadPool(THREADS_NUM);
+    private static ExecutorService threadsClientsPool = Executors.newFixedThreadPool(THREADS_NUM);
 
 
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
         ServerProperties.readConfigPropertiesFile(propFilePath);
         props = ServerProperties.getProperties();
@@ -59,16 +62,20 @@ public class Server {
         }
     }
 
-    private static Map getAuctionItemsList() throws IOException {
+    public static void createAuctionItemsList() throws IOException {
+        /* read auction list from file */
+        auctionItemsList = getAuctionItemsList();
+        int itemsNum = auctionItemsList.size();
+    }
+
+    public static Map getAuctionItemsList() throws IOException {
         String filePath = props.getProperty("auctionItems.file");
         InputFileReader fileReader = InputFileReaderFactory.of(filePath);
 
-        Stream itemsStream = fileReader.readFile();
+        Stream<Item> itemsStream = fileReader.readFile();
 
-        AuctionItemsList itemsList = new AuctionItemsList(itemsStream);
+        AuctionItemsList auctionItemsList = new AuctionItemsList(itemsStream.map(AuctionItem::new));
 
-        return itemsList.getAuctionItemsList();
+        return auctionItemsList.getAuctionItemsList();
     }
-
-
 }

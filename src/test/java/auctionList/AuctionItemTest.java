@@ -3,151 +3,144 @@ package auctionList;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
+import entity.auction.Bidder;
+import entity.auction.Item;
+import javafx.util.converter.DateTimeStringConverter;
 import org.junit.Before;
 import org.junit.Test;
+import server.AdminUser;
+
+
+import java.io.DataInput;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.DateFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
+
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 
 public class AuctionItemTest {
     ObjectMapper mapper = new ObjectMapper();
-    AuctionItem bidItem = new AuctionItem(
+    Item item = new Item(
             "Item1",
             "Sparkly Item",
             100L, 20L);
+    AuctionItem auctionItem;
 
     ArrayList users;
-    ArrayList<BidderItem> bidders;
+    ArrayList<Bidder> bidders;
 
     @Before
     public void setup(){
         //Given
+        auctionItem = new AuctionItem(item);
         users = new ArrayList<User>(){{
             add(new User("username1","FirstName1","LastName1"));// 0
             add(new User("username2","FirstName2","LastName2"));// 1
             add(new User("username3","FirstName3","LastName3"));// 2
         }};
         bidders = new ArrayList<>(){{
-            add(new BidderItem((User)users.get(2),120L));
-            add(new BidderItem((User)users.get(1),140L));
-            add(new BidderItem((User)users.get(0),120L));
-            add(new BidderItem((User)users.get(2),180L));
-            add(new BidderItem((User)users.get(0),200L));
-            add(new BidderItem((User)users.get(2),160L));
+            add(new Bidder((User)users.get(2),120L));
+            add(new Bidder((User)users.get(1),140L));
+            add(new Bidder((User)users.get(0),120L));
+            add(new Bidder((User)users.get(2),180L));
+            add(new Bidder((User)users.get(0),200L));
+            add(new Bidder((User)users.get(2),160L));
         }};
+    }
 
+    @Test
+    public void addBidderTest() throws IOException {
+        //Given
         bidders.forEach(bidder -> {
-            bidItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
-            try {Thread.sleep(1000);}
+            auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
+            try {Thread.sleep(1);}
             catch (InterruptedException e) {e.printStackTrace();}
         });
-    }
-
-    @Test
-    public void addBidderTest(){
-        //Given
-        int currentSize = bidItem.getBiddersList().size();
 
         //When
-        bidItem.addBidder((User)users.get(2),200L);
+        LinkedBlockingDeque<Bidder> biddersList = auctionItem.getBiddersList();
+
+        String firstBidderUserName = biddersList.getFirst().getBidder().getUserName();
+        int listSize = biddersList.size();
 
         //Then
-        int expectedSize = 1 + currentSize;
-        List biddersList = bidItem.getBiddersList();
-
-
-        assertThat(biddersList.size(), is(expectedSize));
+        String expectedFirstBidder = AdminUser.ADMIN.getUserName();
+        int expectedSize = 5;
+        assertThat(firstBidderUserName, is(expectedFirstBidder));
+        assertThat(listSize, is(expectedSize));
     }
 
+
     @Test
-    public void maxBidOfferValueTest() throws InterruptedException {
+    public void incrementBumpPriceTest() throws InterruptedException {
         //Given
-        bidItem.addBidder((User)users.get(0),300L);
-        Thread.sleep(5);
-        bidItem.addBidder((User)users.get(2),310L);
+        bidders.forEach(bidder -> {
+            auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
+            try {Thread.sleep(1);}
+            catch (InterruptedException e) {e.printStackTrace();}
+        });
 
         //When
-        Long maxValue = bidItem.getMaxBidOfferValue();
+        auctionItem.incrementBumpPrice(3L);
 
         //Then
-        Long expectedValue = 300L;
-        assertThat(maxValue, is(expectedValue));
+        Bidder bumpPriceBidder = auctionItem.getBiddersList().peekLast();
+        String expectedFirstBidder = AdminUser.ADMIN.getUserName();
+        Long expectedBumpedPrice = 260L;
+
+        assertThat(bumpPriceBidder.getBidder().getUserName(), is(expectedFirstBidder));
+        assertThat(bumpPriceBidder.getBidderValue(), is(expectedBumpedPrice));
     }
 
+
     @Test
-    public void forceBumpPriceTest() throws InterruptedException {
+    public void winningBidderTest() throws JsonProcessingException {
         //Given
-        bidItem.addBidder((User)users.get(0),220L);
-        Thread.sleep(5);
-        bidItem.addBidder((User)users.get(2),230L);
+        bidders.forEach(bidder -> {
+            auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
+            try {Thread.sleep(1);}
+            catch (InterruptedException e) {e.printStackTrace();}
+        });
 
         //When
-        bidItem.forceBumpPrice(5);
-        Long maxPrice = bidItem.getMaxBidOfferValue();
-        List<BidderItem> list =  bidItem.getBiddersList();
-        Object[] newList = list.stream()
-                .filter(item -> (item.getBidderValue() >= maxPrice))
-                .sorted((item1,item2) -> ((item1.getTimeStamp().getTime() < item2.getTimeStamp().getTime()) ? 1 : -1))
-                .filter(item -> (item.getBidderValue() % bidItem.getBidIncrement()) == 0)
-                .toArray();
-        BidderItem user = (BidderItem) newList[newList.length-1];
-
+        Optional bidder = auctionItem.getWinningBidder();
 
         //Then
-        Long expectedBumpedValue = 320L;
-        String expectedUserName = "administrator";
-        assertThat(user.getBidderValue(), is(expectedBumpedValue));
-        assertThat(user.getBidder().getUserName(), is(expectedUserName));
+        Long expectedBidderValue = bidders.get(4).getBidderValue();
+        assertThat(bidder.isPresent(), is(true));
+        assertThat(((Bidder)bidder.get()).getBidderValue(), is(expectedBidderValue));
     }
 
+    @Test
+    public void noWinningBidderTest() throws JsonProcessingException {
+        //When
+        Optional bidder = auctionItem.getWinningBidder();
+
+        //Then
+        assertThat(bidder.isPresent(), is(false));
+    }
 
     @Test
-    public void winningBidder() throws InterruptedException {
+    public void noWinningBidderAfterBumpTest() throws JsonProcessingException {
         //Given
-        bidItem.addBidder((User)users.get(1),200L);
-        Thread.sleep(5);
-        bidItem.addBidder((User)users.get(2),210L);
+        bidders.forEach(bidder -> {
+            auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());
+            try {Thread.sleep(1);}
+            catch (InterruptedException e) {e.printStackTrace();}
+        });
 
         //When
-        BidderItem bidder = (BidderItem) bidItem.getWinningBidder().get();
+        auctionItem.incrementBumpPrice(4L);
+        Optional bidder = auctionItem.getWinningBidder();
 
         //Then
-        User expectedUser = (User)users.get(0);
-        assertThat(bidder.getBidder(), is(expectedUser));
-        // System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bidItem.getBiddersList()));
-    }
-
-    @Test
-    public void noBidders() throws InterruptedException {
-        //Given
-        AuctionItem item = new AuctionItem(
-                "Item",
-                "Sparkly Item",
-                100L, 20L);
-
-        //When
-        Optional user = item.getWinningBidder();
-
-        //Then
-        assertThat(user.isPresent(), is(false));
-    }
-
-    @Test
-    public void noWinningBidder() throws InterruptedException {
-        //Given
-
-
-        //When
-        bidItem.forceBumpPrice(5);
-        Optional user = bidItem.getWinningBidder();
-
-        //Then
-        assertThat(user.isPresent(), is(false));
-    }
-
-    @Test
-    public void auctionItemToString() throws InterruptedException {
-        System.err.println(bidItem.getFormattedString());
+        assertThat(bidder.isPresent(), is(false));
     }
 }

@@ -1,4 +1,4 @@
-package services.authenticate;
+package authenticate;
 
 public interface PathNames {
     String GET_USER = "user/";

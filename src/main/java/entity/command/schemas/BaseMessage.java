@@ -9,9 +9,8 @@ are to be considered as jason for using ObjectMapper */
         include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = EmptyMessage.class, name = "EmptyMessage"),
-        @JsonSubTypes.Type(value = UsersListMessage.class, name = "UsersListMessage"),
         @JsonSubTypes.Type(value = LoginUserMessage.class, name = "LoginUserMessage"),
-        @JsonSubTypes.Type(value = MessageToClientMessage.class, name = "ChatWithUserMessage"),
+        @JsonSubTypes.Type(value = AddBidMessage.class, name = "AddBidMessage"),
 })
 public abstract class BaseMessage {}
 

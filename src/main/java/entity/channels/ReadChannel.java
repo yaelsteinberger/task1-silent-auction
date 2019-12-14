@@ -1,11 +1,13 @@
 package entity.channels;
 
+import entity.command.Command;
+
 import java.io.IOException;
 
 public interface ReadChannel extends Runnable {
 
-    public void read() throws IOException;
+    public Command read() throws IOException;
 
-    public int handleRead() throws IOException;
+    public int handleRead(Command command) throws IOException;
 
 }

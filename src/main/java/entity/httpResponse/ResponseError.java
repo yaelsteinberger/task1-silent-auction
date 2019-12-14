@@ -1,7 +1,9 @@
-package entity.response;
+package entity.httpResponse;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Map;
 
 public class ResponseError extends ResponseBasic {
 
@@ -14,9 +16,10 @@ public class ResponseError extends ResponseBasic {
             @JsonProperty("status")int status,
             @JsonProperty("error")String error,
             @JsonProperty("message") String message,
-            @JsonProperty("path")String path
+            @JsonProperty("path")String path,
+            @JsonProperty("data") Map data
     ) {
-        super(timestamp, status, path, true);
+        super(timestamp, status, path, null, true);
         this.message = message;
         this.error = error;
     }

@@ -6,7 +6,7 @@ public abstract class AbstractUsersList {
 
     protected abstract int authenticate(User user);
 
-    public abstract int loginUser(UserListItem user);
+    public abstract int loginUser(User user);
 
     public abstract User findByUserName(String userName);
 
