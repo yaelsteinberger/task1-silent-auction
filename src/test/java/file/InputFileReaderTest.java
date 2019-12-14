@@ -54,9 +54,6 @@ public class InputFileReaderTest {
         Stream output = fileReaderJson.readFile();
         Object[] auctionItems = output.toArray();
 
-
-        System.err.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(auctionItems));
-
         //Then
         assertThat(fileReaderJson, isA(JsonInputFileReader.class ));
     }

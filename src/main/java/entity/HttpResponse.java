@@ -1,11 +1,11 @@
-package entity.httpResponse;
+package entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 
-public class HttpResponse extends AbstractResponse{
+public class HttpResponse{
 
     private Integer status;
     private String timestamp;
@@ -59,7 +59,6 @@ public class HttpResponse extends AbstractResponse{
         return message;
     }
 
-    @Override
     public Boolean isError() {
         return this.isError;
     }
