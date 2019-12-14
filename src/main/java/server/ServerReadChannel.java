@@ -13,15 +13,13 @@ import entity.command.Opcodes;
 import entity.command.schemas.AddBidMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
-import entity.httpResponse.AbstractResponse;
-import entity.httpResponse.HttpResponse;
+import entity.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import authenticate.HttpAuthApi;
 import authenticate.HttpStatusCode;
 import usersList.AbstractUsersList;
 import usersList.StatusCode;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,7 +33,6 @@ public class ServerReadChannel implements ReadChannel {
     private final AuctionItemsList auctionItemsList;
     private User user;
     private AbstractUsersList usersList;
-//    private Command readCommand;
     private ObjectMapper objectMapper;
 
     public ServerReadChannel(
@@ -171,13 +168,11 @@ public class ServerReadChannel implements ReadChannel {
         sendMessageToClient(Opcodes.REGISTER_CLIENT, message);
     }
 
-    private void handleRegisterClient(AbstractResponse response) throws IOException {
+    private void handleRegisterClient(HttpResponse response) throws IOException {
         int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
 
         if(response.isError()){
-            HttpResponse errorResponse = (HttpResponse) response;
-
-            switch (errorResponse.getStatusCode()){
+            switch (response.getStatusCode()){
                 case HttpStatusCode.FORBIDDEN: {
                     statusCode = StatusCode.ACCOUNT_ALREADY_EXISTS;
 

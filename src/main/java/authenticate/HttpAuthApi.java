@@ -3,10 +3,7 @@ package authenticate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
-import entity.httpResponse.AbstractResponse;
-import entity.httpResponse.HttpResponse;
-import entity.httpResponse.ResponseError;
-import entity.httpResponse.ResponseSuccess;
+import entity.HttpResponse;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +14,9 @@ import java.util.Objects;
 
 public class HttpAuthApi {
     private final Logger logger = LoggerFactory.getLogger(HttpAuthApi.class);
+    private ObjectMapper mapper = new ObjectMapper();
 
-    public static final MediaType JSON  = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType JSON  = MediaType.parse("application/json; charset=utf-8");
     private final String authBaseUrl;
     private final OkHttpClient httpClient;
 
@@ -29,29 +27,22 @@ public class HttpAuthApi {
     }
 
 
-    protected AbstractResponse makeCall(Request request){
+    private HttpResponse makeCall(Request request){
 
         HttpResponse responseObj = null;
 
         try(Response response = httpClient.newCall(request).execute()) {
-
-            Class responseClass = response.isSuccessful() ?
-                    ResponseSuccess.class :
-                    ResponseError.class;
-
-            ObjectMapper mapper = new ObjectMapper();
             String responseBody = Objects.requireNonNull(response.body()).string();
-            responseObj = (HttpResponse) mapper.readValue(responseBody, HttpResponse.class);
+            responseObj = mapper.readValue(responseBody, HttpResponse.class);
 
         } catch (IOException e){
             logger.error(e.getMessage());
         }
 
         return responseObj;
-
     }
 
-    public AbstractResponse isUserAuth(String userName){
+    public HttpResponse isUserAuth(String userName){
 
         String url = authBaseUrl + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
@@ -64,9 +55,8 @@ public class HttpAuthApi {
     }
 
 
-    public AbstractResponse registerUser(User user) throws JsonProcessingException {
+    public HttpResponse registerUser(User user) throws JsonProcessingException {
 
-        ObjectMapper mapper = new ObjectMapper();
         String json = mapper.writeValueAsString(user);
         RequestBody body = RequestBody.create(json,JSON);
         String url = authBaseUrl + PathNames.REGISTER_USER;
@@ -77,7 +67,5 @@ public class HttpAuthApi {
                 .build();
 
         return makeCall(request);
-
-
     }
 }
