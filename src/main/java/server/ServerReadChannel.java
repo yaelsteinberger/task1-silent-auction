@@ -88,7 +88,7 @@ public class ServerReadChannel implements ReadChannel {
                     logger.debug("Handling read command: REGISTER_CLIENT");
                     User user = ((LoginUserMessage)readCommand.getMessage()).getUser();
                     HttpAuthApi httpApi = new HttpAuthApi();
-                    handleRegisterClient(httpApi.registerUser(user));
+                    statusCode = handleRegisterClient(httpApi.registerUser(user));
                     break;
                 }
 

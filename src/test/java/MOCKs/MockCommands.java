@@ -12,4 +12,11 @@ public class MockCommands {
 
         return new Command(opcode,message);
     }
+
+    public static Command getMockRegisterCommand(User user){
+        Integer opcode = Opcodes.REGISTER_CLIENT;
+        LoginUserMessage message = new LoginUserMessage(user);
+
+        return new Command(opcode,message);
+    }
 }

@@ -104,6 +104,25 @@ public class ServerReadChannelTest {
         }
     }
 
+
+    @Test
+    public void handleReadRegisterCommandTest() throws IOException {
+        //Given
+        Command command = MockCommands.getMockRegisterCommand(users[0]);
+        Map<HttpStatusCode,Integer> expectations = new HashMap<>(){{
+            put(HttpStatusCode.OK_200, StatusCode.REGISTRATION_SUCCESSFUL);
+            put(HttpStatusCode.FORBIDDEN_403, StatusCode.ACCOUNT_ALREADY_EXISTS);
+        }};
+
+        Set<HttpStatusCode> httpStatusCodes = expectations.keySet();
+
+        for (HttpStatusCode httpStatusCode : httpStatusCodes) {
+            Integer expectedStatus = expectations.get(httpStatusCode);
+
+            testReadRegisterCommand(command,httpStatusCode,expectedStatus);
+        }
+    }
+
     private void testReadLoginCommand(
             Command command,
             HttpStatusCode httpStatusCode,
@@ -123,6 +142,31 @@ public class ServerReadChannelTest {
             assertThat(status, is(expectation.get("status")));
             assertThat(sizeBefore, is(expectation.get("sizeBefore")));
             assertThat(sizeAfter, is(expectation.get("sizeAfter")));
+
+            mockAuthServer.resetServer();
+
+        }catch(SocketException e){
+            //Ignore since didn't testing the socket to client connection
+        }
+
+    }
+
+
+    private void testReadRegisterCommand(
+            Command command,
+            HttpStatusCode httpStatusCode,
+            Integer expectedStatus) throws IOException {
+
+        try{
+            //Given
+            mockAuthServer.registerAuthExpectations(
+                    ((LoginUserMessage)command.getMessage()).getUser(), httpStatusCode);
+
+            //When
+            int status = serverReadChannel.handleRead(command);
+
+            //Then
+            assertThat(status, is(expectedStatus));
 
             mockAuthServer.resetServer();
 
