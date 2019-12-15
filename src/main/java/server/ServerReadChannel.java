@@ -20,9 +20,9 @@ import authenticate.HttpAuthApi;
 import authenticate.HttpStatusCode;
 import usersList.AbstractUsersList;
 import usersList.StatusCode;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import util.PrintHelper;
+
+import java.io.*;
 import java.net.Socket;
 
 
@@ -44,7 +44,6 @@ public class ServerReadChannel implements ReadChannel {
         this.auctionItemsList = auctionItemsList;
         this.usersList = usersList;
         this.socket = socket;
-
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         this.objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
@@ -54,10 +53,14 @@ public class ServerReadChannel implements ReadChannel {
     public Command read() throws IOException {
         logger.debug("Waiting for command from client...");
         InputStream reader = socket.getInputStream();
+
+//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(reader));
+//        String dataGram = bufferedReader.readLine();
+//        PrintHelper.printPrettyInRed(dataGram);
         Command readCommand = objectMapper.readValue(reader,Command.class);
         logger.debug("Read command from client: {}",readCommand.getOpcode());
 
-        return readCommand;
+        return null;
     }
 
     @Override
@@ -80,7 +83,6 @@ public class ServerReadChannel implements ReadChannel {
                     }else if(statusCode == StatusCode.SUCCESS){
                         this.user = user;
                     }
-
                     break;
                 }
 
@@ -114,9 +116,10 @@ public class ServerReadChannel implements ReadChannel {
                     //TODO
                     break;
                 }
+
+
             }
         }
-
         return statusCode;
     }
 
@@ -124,26 +127,26 @@ public class ServerReadChannel implements ReadChannel {
     public void run() {
         try {
             /* Before accepting communication from a client, the client must login/signup to the system */
-            if(authenticateClient()){
+//            if(authenticateClient()){
                 boolean isRun = true;
                 while (isRun) {
                     int statusCode = handleRead(read());
 
                     isRun = (statusCode == StatusCode.FATAL_ERROR);
                 }
-            }
-            else{
-                logger.error("User {} Cannot be authenticated", user.getUserName());
-            }
+//            }
+//            else{
+//                logger.error("User {} Cannot be authenticated", user.getUserName());
+//            }
         }catch(IOException e){
-            logger.error("ERROR: {}", e.getMessage());
+            logger.error("{}", e.getMessage());
             e.printStackTrace();
         } finally{
             logger.info("User {} has left the Chat", user.getUserName());
             usersList.removeByUserName(user.getUserName());
 
             try {socket.close();}
-            catch (IOException e) {logger.error("ERROR: {}", e.getMessage());}
+            catch (IOException e) {logger.error("{}", e.getMessage());}
         }
     }
 

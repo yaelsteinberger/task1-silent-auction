@@ -56,9 +56,8 @@ public class Server {
             Socket client = listener.accept();
             logger.info("[{}] Joined in",client.getPort());
 
-//            ClientHandler clientHandler = new ClientHandler(client,userList);
-
-//            threadsPool.execute(clientHandler);
+            ClientHandler clientHandler = new ClientHandler(client,userList,auctionItemsList);
+            threadsClientsPool.execute(clientHandler);
         }
     }
 

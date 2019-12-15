@@ -173,7 +173,7 @@ public class ServerReadChannelTest {
     private void connectToClientSocket() throws IOException {
         /* run client */
         MockClient mockClient = new MockClient();
-        mockClient.run();
+        mockClient.openSocketToServer();
 
         /* get client socket */
         client = listener.accept();

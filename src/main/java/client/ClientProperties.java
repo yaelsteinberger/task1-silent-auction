@@ -1,4 +1,4 @@
-package properties;
+package client;
 
 import java.io.FileInputStream;
 import java.io.IOException;

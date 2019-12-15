@@ -11,6 +11,7 @@ are to be considered as jason for using ObjectMapper */
         @JsonSubTypes.Type(value = EmptyMessage.class, name = "EmptyMessage"),
         @JsonSubTypes.Type(value = LoginUserMessage.class, name = "LoginUserMessage"),
         @JsonSubTypes.Type(value = AddBidMessage.class, name = "AddBidMessage"),
+        @JsonSubTypes.Type(value = MessageToClientMessage.class, name = "MessageToClientMessage"),
 })
 public abstract class BaseMessage {}
 
