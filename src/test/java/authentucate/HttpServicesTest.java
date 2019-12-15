@@ -23,10 +23,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class HttpServicesTest {
     static private HttpAuthApi httpAuthApi;
-//    static private MockAuthServer mockAuthServer;
 
     @BeforeClass
-    static public void setup() throws JsonProcessingException, InterruptedException {
+    static public void setup() throws InterruptedException {
 
         //Given
         String propFilePath = "src\\test\\resources\\mockConfig.properties";
@@ -35,22 +34,18 @@ public class HttpServicesTest {
         String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
         httpAuthApi = new HttpAuthApi();
         MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
-//        mockAuthServer = new MockAuthServer(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
-//        mockAuthServer.startServer();
     }
 
     @AfterClass
     static public void tearDown() throws JsonProcessingException {
         MockAuthServer.stopServer();
-//        mockAuthServer.stopServer();
     }
 
     @Before
     public void cleanServerCache(){
         /* Before each test clear the cache from any previous responses and expectations */
         MockAuthServer.resetServer();
-//        mockAuthServer.resetServer();
     }
 
     @Test
@@ -63,13 +58,11 @@ public class HttpServicesTest {
         // When
         try {
             MockAuthServer.isUserAuthExpectations(userName,status);
-//            mockAuthServer.isUserAuthExpectations(userName,status);
             HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(false));
             assertThat(response.getPath(), is(expectedPath));
             assertThat(response.getStatusCode(), is(status.code()));
@@ -91,13 +84,11 @@ public class HttpServicesTest {
         // When
         try {
             MockAuthServer.isUserAuthExpectations(userName,status);
-//            mockAuthServer.isUserAuthExpectations(userName,status);
             HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(true));
             assertThat(response.getStatusCode(), is(status.code()));
             assertThat(response.getError(), is(status.name()));
@@ -119,8 +110,7 @@ public class HttpServicesTest {
         // When
         try {
             MockAuthServer.isUserAuthExpectations(userName,status);
-//            mockAuthServer.isUserAuthExpectations(userName,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
+            HttpResponse response = httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
@@ -148,13 +138,11 @@ public class HttpServicesTest {
         // When
         try {
             MockAuthServer.registerAuthExpectations(user,status);
-//            mockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.registerUser(user);
+            HttpResponse response = httpAuthApi.registerUser(user);
 
         //Then
         String expectedPath = "/" + PathNames.REGISTER_USER;
 
-//            PrintHelper.printPrettyInRed(response);
         assertThat(response.isError(), is(false));
         assertThat(response.getStatusCode(), is(status.code()));
         assertThat(response.getError(), nullValue());
@@ -178,13 +166,11 @@ public class HttpServicesTest {
         // When
         try {
             MockAuthServer.registerAuthExpectations(user,status);
-//            mockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.registerUser(user);
+            HttpResponse response = httpAuthApi.registerUser(user);
 
             //Then
             String expectedPath = "/" + PathNames.REGISTER_USER;
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(true));
             assertThat(response.getStatusCode(), is(status.code()));
             assertThat(response.getError(), is(status.name()));

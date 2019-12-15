@@ -28,7 +28,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 
 public class ServerReadChannelTest {
-//    private static MockAuthServer mockAuthServer;
     private static UsersList usersList;
     private static User[] users;
     private static AuctionItemsList auctionItemsList;
@@ -49,9 +48,7 @@ public class ServerReadChannelTest {
         String mockHost = (String) props.get("authServer.host");
         String mockPort = (String) props.get("authServer.port");
         MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
-//        mockAuthServer = new MockAuthServer(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
-//        mockAuthServer.startServer();
 
         auctionItemsList = MockAuctionItems.generateAuctionItemsList();
         users = MockUsers.getUsers();
@@ -64,7 +61,6 @@ public class ServerReadChannelTest {
     @AfterClass
     public static void tearDown() throws IOException {
         MockAuthServer.stopServer();
-//        mockAuthServer.stopServer();
         listener.close();
     }
 
@@ -74,7 +70,6 @@ public class ServerReadChannelTest {
 
         /* Before each test clear the cache from any previous responses and expectations */
         MockAuthServer.resetServer();
-//        mockAuthServer.resetServer();
     }
 
     @Test
@@ -134,14 +129,12 @@ public class ServerReadChannelTest {
 
         connectToClientSocket();
         MockAuthServer.resetServer();
-//        mockAuthServer.resetServer();
 
         //Given
         /* first "connect" user to channel by logging in */
         Command command = MockCommands.getMockLoginCommand(users[0]);
         HttpStatusCode httpStatusCode = HttpStatusCode.OK_200;
         MockAuthServer.isUserAuthExpectations(((LoginUserMessage)command.getMessage()).getUser().getUserName(), httpStatusCode);
-//        mockAuthServer.isUserAuthExpectations(((LoginUserMessage)command.getMessage()).getUser().getUserName(), httpStatusCode);
         serverReadChannel.handleRead(command);
 
         /* add few bidders to an acutionItem */
@@ -152,14 +145,27 @@ public class ServerReadChannelTest {
         auctionItem.addBidder(users[2],4300L);
         auctionItem.addBidder(users[1],4450L);
 
-        //When
+        //When - Success
         command = MockCommands.getMockAddBidCommand(id, bidValue);//Ring item
-        serverReadChannel.handleRead(command);
-        Bidder lastBidderInList = auctionItemsList.findById(id).getBiddersList().peekLast();
+        int successStatus = serverReadChannel.handleRead(command);
+        Bidder bidderSuccess = auctionItemsList.findById(id).getBiddersList().peekLast();
+
+        //When - Fail
+        Long newValue = 4750L;
+        auctionItem.addBidder(users[1],newValue);
+        command = MockCommands.getMockAddBidCommand(id, bidValue);//Ring item
+        int failStatus = serverReadChannel.handleRead(command);
+        Bidder bidderFail = auctionItemsList.findById(id).getBiddersList().peekLast();
 
         //Then
-        assertThat(lastBidderInList.getBidder(), is(users[0]));
-        assertThat(lastBidderInList.getBidderValue(), is(bidValue));
+        int expectedSuccessStatus = StatusCode.SUCCESS;
+        int expectedFailStatus = StatusCode.INVALID_VALUE;
+        assertThat(successStatus, is(expectedSuccessStatus));
+        assertThat(bidderSuccess.getBidder(), is(users[0]));
+        assertThat(bidderSuccess.getBidderValue(), is(bidValue));
+        assertThat(failStatus, is(expectedFailStatus));
+        assertThat(bidderFail.getBidder(), is(users[1]));
+        assertThat(bidderFail.getBidderValue(), is(newValue));
 
         client.close();
     }
@@ -183,12 +189,10 @@ public class ServerReadChannelTest {
 
         connectToClientSocket();
         MockAuthServer.resetServer();
-//        mockAuthServer.resetServer();
 
         //Given
         int sizeBefore = usersList.getUsersList().size();
         MockAuthServer.isUserAuthExpectations(((LoginUserMessage)command.getMessage()).getUser().getUserName(), httpStatusCode);
-//        mockAuthServer.isUserAuthExpectations(((LoginUserMessage)command.getMessage()).getUser().getUserName(), httpStatusCode);
 
         //When
         int status = serverReadChannel.handleRead(command);
@@ -210,11 +214,9 @@ public class ServerReadChannelTest {
 
         connectToClientSocket();
         MockAuthServer.resetServer();
-//        mockAuthServer.resetServer();
 
         //Given
         MockAuthServer.registerAuthExpectations(((LoginUserMessage)command.getMessage()).getUser(), httpStatusCode);
-//        mockAuthServer.registerAuthExpectations(((LoginUserMessage)command.getMessage()).getUser(), httpStatusCode);
 
         //When
         int status = serverReadChannel.handleRead(command);

@@ -105,8 +105,8 @@ public class ServerReadChannel implements ReadChannel {
                     logger.debug("Handling read command: ADD_BID");
                     AddBidMessage addBid = (AddBidMessage)readCommand.getMessage();
                     AuctionItem auctionItem = auctionItemsList.findById(addBid.getAuctionItemId());
-                    auctionItem.addBidder(user,addBid.getBidValue());
-                    statusCode = StatusCode.SUCCESS;
+                    boolean isSuccess = auctionItem.addBidder(user,addBid.getBidValue());
+                    statusCode = isSuccess ? StatusCode.SUCCESS : StatusCode.INVALID_VALUE;
                     break;
                 }
 

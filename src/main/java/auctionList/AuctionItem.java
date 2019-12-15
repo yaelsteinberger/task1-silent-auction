@@ -36,10 +36,13 @@ public class AuctionItem {
         return biddersList;
     }
 
-    public void addBidder(@NotNull User user, Long bidderValue){
-        if(isBidValid(bidderValue)){
+    public boolean addBidder(@NotNull User user, Long bidderValue){
+        boolean isValueValid = isBidValid(bidderValue);
+        if(isValueValid){
             this.biddersList.add(new Bidder(user,bidderValue));
         }
+
+        return isValueValid;
     }
 
     public Optional<Bidder> getWinningBidder(){

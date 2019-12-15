@@ -10,7 +10,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 import server.ServerProperties;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +24,7 @@ public class UsersListTest {
 
 
     @BeforeClass
-    static public void setup() throws JsonProcessingException, InterruptedException {
+    static public void setup() throws InterruptedException {
 
 
         //Given
@@ -103,7 +102,6 @@ public class UsersListTest {
 
         //When
         MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
-//        mockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
         int status = usersList.loginUser(user);
         User userInList = usersList.findByUserName(user.getUserName());
 
@@ -114,7 +112,7 @@ public class UsersListTest {
     }
 
     @Test
-    public void removeByUserNameTest() throws IOException {
+    public void removeByUserNameTest() {
 
         //Given
         String userNameToRemove = "username2";
@@ -122,11 +120,9 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                MockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
-//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
-                usersList.loginUser((User) user);
+                MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.OK_200);//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                usersList.loginUser(user);
                 MockAuthServer.resetServer();
-//                mockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -140,7 +136,7 @@ public class UsersListTest {
     }
 
     @Test
-    public void getUsersListTest() throws IOException {
+    public void getUsersListTest() {
 
         //Given
         int sizeBefore = usersList.getUsersList().size();
@@ -149,10 +145,8 @@ public class UsersListTest {
         users.forEach(user -> {
             try {
                 MockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
-//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
                 usersList.loginUser((User) user);
                 MockAuthServer.resetServer();
-//                mockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();
             }
