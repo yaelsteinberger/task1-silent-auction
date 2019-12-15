@@ -30,7 +30,7 @@ public class Server {
     private static final int THREADS_NUM = 3;
     private static Properties props = null;
     private static AbstractUsersList userList;
-    private static Map auctionItemsList;
+    private static AuctionItemsList auctionItemsList;
     private final static String propFilePath = "serverConfig.properties";
 
     private static ExecutorService threadsClientsPool = Executors.newFixedThreadPool(THREADS_NUM);
@@ -56,26 +56,22 @@ public class Server {
             Socket client = listener.accept();
             logger.info("[{}] Joined in",client.getPort());
 
-//            ClientHandler clientHandler = new ClientHandler(client,userList);
-
-//            threadsPool.execute(clientHandler);
+            ClientHandler clientHandler = new ClientHandler(client,userList,auctionItemsList);
+            threadsClientsPool.execute(clientHandler);
         }
     }
 
     public static void createAuctionItemsList() throws IOException {
         /* read auction list from file */
         auctionItemsList = getAuctionItemsList();
-        int itemsNum = auctionItemsList.size();
     }
 
-    public static Map getAuctionItemsList() throws IOException {
+    private static AuctionItemsList getAuctionItemsList() throws IOException {
         String filePath = props.getProperty("auctionItems.file");
         InputFileReader fileReader = InputFileReaderFactory.of(filePath);
 
         Stream<Item> itemsStream = fileReader.readFile();
 
-        AuctionItemsList auctionItemsList = new AuctionItemsList(itemsStream.map(AuctionItem::new));
-
-        return auctionItemsList.getAuctionItemsList();
+        return new AuctionItemsList(itemsStream.map(AuctionItem::new));
     }
 }

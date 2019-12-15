@@ -23,11 +23,11 @@ public class UsersList extends AbstractUsersList {
     protected int authenticate(User user) {
         int statusCode = StatusCode.SUCCESS;
 
-        HttpAuthApi httpServices = new HttpAuthApi();
-        HttpResponse responseObject = (HttpResponse) httpServices.isUserAuth(user.getUserName());
+        HttpAuthApi httpAuthApi = new HttpAuthApi();
+        HttpResponse responseObject = httpAuthApi.isUserAuth(user.getUserName());
 
         if(responseObject.isError()){
-            HttpResponse errorMsg = (HttpResponse) responseObject;
+            HttpResponse errorMsg =  responseObject;
             logger.error(errorMsg.getMessage().replace("User", "User " + user.getFirstName() + " " + user.getLastName()));
 
             switch (errorMsg.getStatusCode()){

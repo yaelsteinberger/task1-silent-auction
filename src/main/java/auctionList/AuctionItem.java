@@ -36,10 +36,13 @@ public class AuctionItem {
         return biddersList;
     }
 
-    public void addBidder(@NotNull User user, Long bidderValue){
-        if(isBidValid(bidderValue)){
+    public boolean addBidder(@NotNull User user, Long bidderValue){
+        boolean isValueValid = isBidValid(bidderValue);
+        if(isValueValid){
             this.biddersList.add(new Bidder(user,bidderValue));
         }
+
+        return isValueValid;
     }
 
     public Optional<Bidder> getWinningBidder(){
@@ -102,7 +105,8 @@ public class AuctionItem {
         if(!this.biddersList.isEmpty()) {
             /* the offer should follow the bid increment and be higher than the last offer */
             Long lastValue = this.biddersList.peekLast().getBidderValue();
-            boolean isValidIncrement = (value % itemData.getBidIncrement() == 0);
+            Long deltaValue = value - itemData.getStartPrice();
+            boolean isValidIncrement = (deltaValue % itemData.getBidIncrement() == 0);
 
             return (value > lastValue) && isValidIncrement;
         }

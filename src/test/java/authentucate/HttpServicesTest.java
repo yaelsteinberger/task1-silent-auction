@@ -1,31 +1,31 @@
 package authentucate;
 
 import MOCKs.MockAuthServer;
+
+//import MOCKs.MockAuthServer;
+import authenticate.HttpAuthApi;
+import authenticate.PathNames;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import entity.User;
 import entity.HttpResponse;
+import entity.User;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 import server.ServerProperties;
-import authenticate.HttpAuthApi;
-import authenticate.PathNames;
+
 import java.io.IOException;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.isA;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class HttpServicesTest {
     static private HttpAuthApi httpAuthApi;
-    static private MockAuthServer mockAuthServer;
 
     @BeforeClass
-    static public void setup() throws JsonProcessingException {
+    static public void setup() throws InterruptedException {
 
         //Given
         String propFilePath = "src\\test\\resources\\mockConfig.properties";
@@ -33,19 +33,19 @@ public class HttpServicesTest {
         String mockHost = (String) ServerProperties.getProperties().get("authServer.host");
         String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
         httpAuthApi = new HttpAuthApi();
-        mockAuthServer = new MockAuthServer(mockHost,Integer.parseInt(mockPort));
-        mockAuthServer.startServer();
+        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
+        MockAuthServer.startServer();
     }
 
     @AfterClass
     static public void tearDown() throws JsonProcessingException {
-        mockAuthServer.stopServer();
+        MockAuthServer.stopServer();
     }
 
     @Before
     public void cleanServerCache(){
         /* Before each test clear the cache from any previous responses and expectations */
-        mockAuthServer.resetServer();
+        MockAuthServer.resetServer();
     }
 
     @Test
@@ -57,13 +57,12 @@ public class HttpServicesTest {
 
         // When
         try {
-            mockAuthServer.isUserAuthExpectations(userName,status);
+            MockAuthServer.isUserAuthExpectations(userName,status);
             HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(false));
             assertThat(response.getPath(), is(expectedPath));
             assertThat(response.getStatusCode(), is(status.code()));
@@ -84,13 +83,12 @@ public class HttpServicesTest {
 
         // When
         try {
-            mockAuthServer.isUserAuthExpectations(userName,status);
+            MockAuthServer.isUserAuthExpectations(userName,status);
             HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(true));
             assertThat(response.getStatusCode(), is(status.code()));
             assertThat(response.getError(), is(status.name()));
@@ -111,8 +109,8 @@ public class HttpServicesTest {
 
         // When
         try {
-            mockAuthServer.isUserAuthExpectations(userName,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
+            MockAuthServer.isUserAuthExpectations(userName,status);
+            HttpResponse response = httpAuthApi.isUserAuth(userName);
 
             //Then
             String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
@@ -139,13 +137,12 @@ public class HttpServicesTest {
 
         // When
         try {
-            mockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.registerUser(user);
+            MockAuthServer.registerAuthExpectations(user,status);
+            HttpResponse response = httpAuthApi.registerUser(user);
 
         //Then
         String expectedPath = "/" + PathNames.REGISTER_USER;
 
-//            PrintHelper.printPrettyInRed(response);
         assertThat(response.isError(), is(false));
         assertThat(response.getStatusCode(), is(status.code()));
         assertThat(response.getError(), nullValue());
@@ -168,13 +165,12 @@ public class HttpServicesTest {
 
         // When
         try {
-            mockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.registerUser(user);
+            MockAuthServer.registerAuthExpectations(user,status);
+            HttpResponse response = httpAuthApi.registerUser(user);
 
             //Then
             String expectedPath = "/" + PathNames.REGISTER_USER;
 
-//            PrintHelper.printPrettyInRed(response);
             assertThat(response.isError(), is(true));
             assertThat(response.getStatusCode(), is(status.code()));
             assertThat(response.getError(), is(status.name()));

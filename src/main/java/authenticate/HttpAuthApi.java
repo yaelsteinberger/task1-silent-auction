@@ -46,7 +46,7 @@ public class HttpAuthApi {
 
         String url = authBaseUrl + PathNames.IS_USER_AUTH.replace("{userName}",userName);
 
-        System.err.println(url);
+//        System.err.println(url);
         Request request = new Request.Builder()
                 .url(url)
                 .build();
