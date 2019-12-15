@@ -32,7 +32,7 @@ public class HttpResponse{
         this.isError = (error != null);
     }
 
-    public String getTimeStamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
