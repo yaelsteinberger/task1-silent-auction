@@ -97,6 +97,7 @@ public class ServerReadChannel implements ReadChannel {
 
                     String message = auctionItemsList.itemsListToPrettyString();
                     sendMessageToClient(Opcodes.AUCTION_LIST, message);
+                    statusCode = StatusCode.SUCCESS;
                     break;
                 }
 
@@ -105,6 +106,7 @@ public class ServerReadChannel implements ReadChannel {
                     AddBidMessage addBid = (AddBidMessage)readCommand.getMessage();
                     AuctionItem auctionItem = auctionItemsList.findById(addBid.getAuctionItemId());
                     auctionItem.addBidder(user,addBid.getBidValue());
+                    statusCode = StatusCode.SUCCESS;
                     break;
                 }
 

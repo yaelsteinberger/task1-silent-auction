@@ -12,37 +12,35 @@ import org.mockserver.model.HttpStatusCode;
 import server.ServerProperties;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class UsersListTest {
-    static private MockAuthServer mockAuthServer;
     static private List<User> users;
     private UsersList usersList;
 
 
     @BeforeClass
-    static public void setup() throws JsonProcessingException {
+    static public void setup() throws JsonProcessingException, InterruptedException {
+
 
         //Given
         String propFilePath = "src\\test\\resources\\mockConfig.properties";
         ServerProperties.readConfigPropertiesFile(propFilePath);
         String mockHost = (String) ServerProperties.getProperties().get("authServer.host");
         String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
-        mockAuthServer = new MockAuthServer(mockHost,Integer.parseInt(mockPort));
-        mockAuthServer.startServer();
-
+        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
+        MockAuthServer.startServer();
         users = Arrays.asList(MockUsers.getUsers());
     }
 
     @AfterClass
     static public void tearDown() throws JsonProcessingException {
-        mockAuthServer.stopServer();
+        MockAuthServer.stopServer();
     }
 
     @Before
@@ -50,7 +48,8 @@ public class UsersListTest {
         usersList = new UsersList();
 
         /* Before each test clear the cache from any previous responses and expectations */
-        mockAuthServer.resetServer();
+        MockAuthServer.resetServer();
+
     }
 
     @Test
@@ -63,7 +62,7 @@ public class UsersListTest {
                 "LastName4");
 
         //When
-        mockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.OK_200);
+        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.OK_200);
         int status = usersList.loginUser(user);
         User userInList = usersList.findByUserName(user.getUserName());
 
@@ -83,7 +82,7 @@ public class UsersListTest {
                 "LastName4");
 
         //When
-        mockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.FORBIDDEN_403);
+        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.FORBIDDEN_403);
         int status = usersList.loginUser(user);
         User userInList = usersList.findByUserName(user.getUserName());
 
@@ -103,7 +102,8 @@ public class UsersListTest {
                 "LastName4");
 
         //When
-        mockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
+        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
+//        mockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
         int status = usersList.loginUser(user);
         User userInList = usersList.findByUserName(user.getUserName());
 
@@ -122,9 +122,11 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                MockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
                 usersList.loginUser((User) user);
-                mockAuthServer.resetServer();
+                MockAuthServer.resetServer();
+//                mockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -133,7 +135,7 @@ public class UsersListTest {
         usersList.removeByUserName(userNameToRemove);
 
         //Then
-        entity.User user = usersList.findByUserName(userNameToRemove);
+        User user = usersList.findByUserName(userNameToRemove);
         assertThat(user, is(nullValue()));
     }
 
@@ -146,9 +148,11 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                MockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
                 usersList.loginUser((User) user);
-                mockAuthServer.resetServer();
+                MockAuthServer.resetServer();
+//                mockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();
             }

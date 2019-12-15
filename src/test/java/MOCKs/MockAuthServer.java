@@ -1,5 +1,6 @@
 package MOCKs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import entity.User;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
@@ -17,29 +18,30 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class MockAuthServer {
 
-    private final String host;
-    private final Integer port;
-    private ClientAndServer mockServer;
+    private static String host;
+    private static Integer port;
+    private static ClientAndServer mockServer;
 
-    public MockAuthServer(String host,Integer port) {
-        this.host = host;
-        this.port = port;
+    public static void setAttributes (String myHost, Integer myPort)  {
+        host = myHost;
+        port = myPort;
     }
 
-    public void startServer() {
-        this.mockServer = startClientAndServer(port);
+    public static void startServer() throws InterruptedException {
+        Thread.sleep(1000);// not sure why in multiple tests class it stops connecting the socket. this is the only solution at the moment
+        mockServer = startClientAndServer(port);
     }
 
-    public void stopServer() {
+    public static void stopServer() throws JsonProcessingException {
         mockServer.stop();
     }
 
-    public void resetServer(){
+    public static void resetServer(){
         new MockServerClient(host, port).reset();
     }
 
 
-    public void isUserAuthExpectations(String userName, HttpStatusCode status) throws IOException {
+    public static void isUserAuthExpectations(String userName, HttpStatusCode status) throws IOException {
 
         String path = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
         boolean isExpectActive = (status.code() == HttpStatusCode.OK_200.code());
@@ -61,7 +63,7 @@ public class MockAuthServer {
                 );
     }
 
-    public void registerAuthExpectations(User user, HttpStatusCode status) throws IOException {
+    public static void registerAuthExpectations(User user, HttpStatusCode status) throws IOException {
 
         String path = "/" + PathNames.REGISTER_USER;
         boolean isExpectActive = (status.code() == HttpStatusCode.OK_200.code());
@@ -91,7 +93,7 @@ public class MockAuthServer {
     }
 
 
-    private Map getDataByStatus(HttpStatusCode status){
+    private static Map getDataByStatus(HttpStatusCode status){
         boolean isActive = (status.code() == HttpStatusCode.OK_200.code());
         boolean isDoesntExists = (status.code() == HttpStatusCode.NOT_FOUND_404.code());
         return isDoesntExists ? null : new HashMap<String,Boolean>() {{put("active",isActive);}};

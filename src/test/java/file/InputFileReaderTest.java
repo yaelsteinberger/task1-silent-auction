@@ -40,40 +40,40 @@ public class InputFileReaderTest {
         //Then
         assertThat(fileReaderJSON, isA(JsonInputFileReader.class ));
     }
-
-    @Test
-    /* TODO: MOCK JSON FILE */
-    public void readingJsonFileTest() throws IOException {
-        //Given
-        String filePath = "auctionItems.json";
-
-        //When
-        InputFileReader fileReader = InputFileReaderFactory.of(filePath);
-        JsonInputFileReader fileReaderJson = ((JsonInputFileReader)fileReader);
-
-        Stream output = fileReaderJson.readFile();
-        Object[] auctionItems = output.toArray();
-
-        //Then
-        assertThat(fileReaderJson, isA(JsonInputFileReader.class ));
-    }
-
-    @Test
-    /* TODO: MOCK CSV FILE */
-    public void readingCsvFileTest() throws IOException {
-        //Given
-        String filePath = "auctionItems.csv";
-
-        //When
-        InputFileReader fileReader = InputFileReaderFactory.of(filePath);
-        CsvInputFileReader fileReaderCsv = ((CsvInputFileReader)fileReader);
-
-        Stream output = fileReaderCsv.readFile();
-        Object[] auctionItems = output.toArray();
-
-        //Then
-        assertThat(fileReaderCsv, isA(CsvInputFileReader.class ));
-    }
+//
+//    @Test
+//    /* TODO: MOCK JSON FILE */
+//    public void readingJsonFileTest() throws IOException {
+//        //Given
+//        String filePath = "auctionItems.json";
+//
+//        //When
+//        InputFileReader fileReader = InputFileReaderFactory.of(filePath);
+//        JsonInputFileReader fileReaderJson = ((JsonInputFileReader)fileReader);
+//
+//        Stream output = fileReaderJson.readFile();
+//        Object[] auctionItems = output.toArray();
+//
+//        //Then
+//        assertThat(fileReaderJson, isA(JsonInputFileReader.class ));
+//    }
+//
+//    @Test
+//    /* TODO: MOCK CSV FILE */
+//    public void readingCsvFileTest() throws IOException {
+//        //Given
+//        String filePath = "auctionItems.csv";
+//
+//        //When
+//        InputFileReader fileReader = InputFileReaderFactory.of(filePath);
+//        CsvInputFileReader fileReaderCsv = ((CsvInputFileReader)fileReader);
+//
+//        Stream output = fileReaderCsv.readFile();
+//        Object[] auctionItems = output.toArray();
+//
+//        //Then
+//        assertThat(fileReaderCsv, isA(CsvInputFileReader.class ));
+//    }
 }
 
 
