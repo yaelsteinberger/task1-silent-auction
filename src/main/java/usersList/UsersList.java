@@ -79,4 +79,8 @@ public class UsersList extends AbstractUsersList {
         usersList.remove(userName);
     }
 
+    public Map getUsersList(){
+        return usersList;
+    }
+
 }

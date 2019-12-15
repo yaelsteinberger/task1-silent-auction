@@ -88,7 +88,7 @@ public class ServerReadChannel implements ReadChannel {
                     logger.debug("Handling read command: REGISTER_CLIENT");
                     User user = ((LoginUserMessage)readCommand.getMessage()).getUser();
                     HttpAuthApi httpApi = new HttpAuthApi();
-                    handleRegisterClient(httpApi.registerUser(user));
+                    statusCode = handleRegisterClient(httpApi.registerUser(user));
                     break;
                 }
 
@@ -125,8 +125,7 @@ public class ServerReadChannel implements ReadChannel {
             if(authenticateClient()){
                 boolean isRun = true;
                 while (isRun) {
-                    Command readCommand = read();
-                    int statusCode = handleRead(readCommand);
+                    int statusCode = handleRead(read());
 
                     isRun = (statusCode == StatusCode.FATAL_ERROR);
                 }
@@ -168,7 +167,7 @@ public class ServerReadChannel implements ReadChannel {
         sendMessageToClient(Opcodes.REGISTER_CLIENT, message);
     }
 
-    private void handleRegisterClient(HttpResponse response) throws IOException {
+    private int handleRegisterClient(HttpResponse response) throws IOException {
         int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
 
         if(response.isError()){
@@ -185,8 +184,9 @@ public class ServerReadChannel implements ReadChannel {
         }else{
             logger.debug("Registration successful - Sending welcome message to client");
             sendMessageToClient(Opcodes.WELCOME, getWelcomeMessage());
-
         }
+
+        return statusCode;
     }
 
     private void sendMessageToClient(int opcode, String message) throws IOException {

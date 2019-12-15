@@ -1,6 +1,7 @@
 package usersList;
 
 import MOCKs.MockAuthServer;
+import MOCKs.MockUsers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import entity.User;
 import org.junit.AfterClass;
@@ -12,6 +13,8 @@ import server.ServerProperties;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,7 +22,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 public class UsersListTest {
     static private MockAuthServer mockAuthServer;
-    static private ArrayList users;
+    static private List<User> users;
     private UsersList usersList;
 
 
@@ -34,11 +37,7 @@ public class UsersListTest {
         mockAuthServer = new MockAuthServer(mockHost,Integer.parseInt(mockPort));
         mockAuthServer.startServer();
 
-        users = new ArrayList<User>(){{
-            add(new User("username1","FirstName1","LastName1"));
-            add(new User("username2","FirstName2","LastName2"));
-            add(new User("username3","FirstName3","LastName3"));
-        }};
+        users = Arrays.asList(MockUsers.getUsers());
     }
 
     @AfterClass
@@ -136,5 +135,32 @@ public class UsersListTest {
         //Then
         entity.User user = usersList.findByUserName(userNameToRemove);
         assertThat(user, is(nullValue()));
+    }
+
+    @Test
+    public void getUsersListTest() throws IOException {
+
+        //Given
+        int sizeBefore = usersList.getUsersList().size();
+
+        //When
+        users.forEach(user -> {
+            try {
+                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                usersList.loginUser((User) user);
+                mockAuthServer.resetServer();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        });
+        int sizeAfter = usersList.getUsersList().size();
+
+        //Then
+        int expectedSizeBefore = 0;
+        int expectedSizeAfter = 3;
+
+        assertThat(sizeBefore, is(expectedSizeBefore));
+        assertThat(sizeAfter, is(expectedSizeAfter));
     }
 }
