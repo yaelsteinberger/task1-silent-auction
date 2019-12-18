@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
+import server.clientHandler.ServerReadChannel;
 import usersList.StatusCode;
 import usersList.UsersList;
 
@@ -172,8 +173,8 @@ public class ServerReadChannelTest {
 
     private void connectToClientSocket() throws IOException {
         /* run client */
-        MockClient mockClient = new MockClient();
-        mockClient.openSocketToServer();
+        MockSocketTarget mockClient = new MockSocketTarget();
+        mockClient.openSocketToSource();
 
         /* get client socket */
         client = listener.accept();

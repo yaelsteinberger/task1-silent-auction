@@ -2,12 +2,13 @@ package client;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
 import entity.channels.ReadChannel;
 import entity.command.Command;
 import entity.command.Opcodes;
+import entity.command.schemas.BaseMessage;
+import entity.command.schemas.EmptyMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
@@ -17,52 +18,63 @@ import util.PrintHelper;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientReadChannel implements ReadChannel {
     private final static Logger logger = LoggerFactory.getLogger(ClientReadChannel.class);
 
     private final Socket socket;
-    private final String userId;
-    private ObjectMapper objectMapper;
+    private final ChannelReadServices channelReadServices;
+    private ObjectMapper mapper;
 
-    /* Create stream to read from keyboard */
-    private BufferedReader kbd;
-
-    public ClientReadChannel(Socket socket) throws IOException {
+    public ClientReadChannel(Socket socket, User clientIdentityDetails) throws IOException {
         this.socket = socket;
-        this.userId = String.valueOf(socket.getLocalPort());;
-        this.objectMapper = new ObjectMapper();
-        this.kbd = new BufferedReader(new InputStreamReader(System.in));
-        this.objectMapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-
-//        /* Send Client's login details to server */
-//        this.objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-//        Command writeCommand = new Command(Opcodes.LOGIN_CLIENT,new LoginUserMessage(new User("guypeleg","Guy","Peleg")));
-//        OutputStream writer = socket.getOutputStream();
-//        this.objectMapper.writeValue(writer,writeCommand);
+        this.mapper = new ObjectMapper();
+        this.mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
+        this.mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+        this.channelReadServices = new ChannelReadServices(socket,clientIdentityDetails);
     }
 
     @Override
     public Command read() throws IOException {
         logger.debug("Waiting for reply from server...");
         InputStream reader = socket.getInputStream();
-        Command readCommand = objectMapper.readValue(reader,Command.class);
+
+//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(reader));
+//        String dataGram = bufferedReader.readLine();
+//        PrintHelper.printPrettyInRed(dataGram);
+
+        Command readCommand = mapper.readValue(reader,Command.class);
         logger.debug("Read reply from server: {}",readCommand.getOpcode());
 
         return readCommand;
     }
 
     @Override
-    public int handleRead(Command command) throws JsonProcessingException {
+    public int handleRead(Command command) throws IOException {
         int statusCode = StatusCode.FATAL_ERROR;
         logger.debug("Handling read command: {}",command.getOpcode());
+        try {
+            switch(command.getOpcode()){
 
-        switch(command.getOpcode()){
+                case Opcodes.WELCOME:{
+                    statusCode = this.channelReadServices.handleWelcomeMessage((MessageToClientMessage) command.getMessage());
+                    break;
+                }
 
-            case Opcodes.WELCOME:{
-                statusCode = handleWelcomeMessage(command);
-                break;
+                case Opcodes.REGISTER_CLIENT:{
+                    statusCode = this.channelReadServices.handleRegisterClientMessage((MessageToClientMessage) command.getMessage());
+                    break;
+                }
+
+                case Opcodes.LOGIN_SUCCESS:{
+                    this.channelReadServices.handleLoginSuccessMessage((MessageToClientMessage)command.getMessage());
+                    break;
+                }
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         return statusCode;
@@ -71,10 +83,15 @@ public class ClientReadChannel implements ReadChannel {
     @Override
     public void run() {
         try {
+
+            /* send to server connection acknowledgement */
+            this.channelReadServices.handleClientConnectionEvent();
+
             boolean isRun = true;
             while(isRun){
-                int statusCode = handleRead(read());
-                isRun = (statusCode == StatusCode.FATAL_ERROR);
+                Command command = read();
+                int statusCode = handleRead(command);
+                isRun = (statusCode != StatusCode.FATAL_ERROR);
             }
         } catch (IOException e) {
             logger.error("{}", e.getMessage());
@@ -84,13 +101,6 @@ public class ClientReadChannel implements ReadChannel {
             try {socket.close();}
             catch (IOException e) {logger.error("{}", e.getMessage());}
         }
-    }
-
-    private int handleWelcomeMessage(Command command) throws JsonProcessingException {
-        /* Display on screen the welcome message and wait for user input */
-        MessageToClientMessage message = (MessageToClientMessage)command.getMessage();
-        System.err.println(message.getMessage());
-        return StatusCode.SUCCESS;
     }
 }
 

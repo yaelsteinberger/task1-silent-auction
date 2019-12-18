@@ -62,6 +62,7 @@ public class UsersList extends AbstractUsersList {
 
             if(statusCode == StatusCode.SUCCESS){
                 usersList.put(user.getUserName(), user);
+                logger.debug("Added user {} to list", user.getUserName());
             }
 
         }

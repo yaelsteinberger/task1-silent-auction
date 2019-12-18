@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Table",
+    "description": "Made of green wood",
+    "startPrice": 300,
+    "bidIncrement": 50
+  },
+  {
+    "name": "Bowle",
+    "description": "Created from a rainbow",
+    "startPrice": 30,
+    "bidIncrement": 5
+  },
+  {
+    "name": "Ring",
+    "description": "Made of gold from the future",
+    "startPrice": 4000,
+    "bidIncrement": 150
+  },
+  {
+    "name": "Laptop",
+    "description": "For gamers who like sparkles",
+    "startPrice": 2000,
+    "bidIncrement": 100
+  }
+]

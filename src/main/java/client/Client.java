@@ -28,7 +28,7 @@ public class Client {
         ClientProperties.readConfigPropertiesFile();
         props = ClientProperties.getProperties();
 
-//        clientIdentityDetails = GenerateUser.generateName();
+        clientIdentityDetails = GenerateUser.generateName(true);
 
         runClient();
     }
@@ -49,7 +49,7 @@ public class Client {
         /* NOTE: to be able to check the Future results independently, cannot
         use invokeAll but Submit*/
         List<Future> results = new ArrayList<Future>(){{
-            add(executor.submit(Executors.callable(new ClientReadChannel(socket))));
+            add(executor.submit(Executors.callable(new ClientReadChannel(socket,clientIdentityDetails))));
 //            add(executor.submit(Executors.callable(new ClientWriteChannel(socket,clientIdentityDetails))));
         }};
 
@@ -63,5 +63,9 @@ public class Client {
 
         socket.close();
         System.exit(0);
+    }
+
+    public static void getClientIdentityDetails(){
+
     }
 }

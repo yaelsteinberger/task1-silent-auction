@@ -8,5 +8,6 @@ public interface StatusCode {
     int NO_ACCOUNT_EXISTS = 12;
     int ACCOUNT_IS_DISABLED = 13;
     int ACCOUNT_ALREADY_EXISTS = 14;
+    int TERMINATE_SESSION = 15;
     int FATAL_ERROR = 100;
 }

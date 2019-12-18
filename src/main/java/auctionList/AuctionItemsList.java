@@ -116,6 +116,6 @@ public class AuctionItemsList {
             retVal.append(line);
         }
 
-        return retVal.toString();
+        return "AUCTION ITEMS LIST:\n" + retVal.toString();
     }
 }
