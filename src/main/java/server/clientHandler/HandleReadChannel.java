@@ -7,6 +7,7 @@ import entity.User;
 import entity.command.Opcodes;
 import entity.command.schemas.AddBidMessage;
 import entity.command.schemas.BaseMessage;
+import entity.command.schemas.GetAuctionItemMessage;
 import entity.command.schemas.LoginUserMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,17 +63,27 @@ public class HandleReadChannel {
 
             case Opcodes.GET_AUCTION_LIST:{
                 logger.debug("Handling read command: GET_AUCTION_LIST");
-
                 String listString = this.auctionItemsList.itemsListToPrettyString();
                 this.channelServices.sendMessageToClient(Opcodes.AUCTION_LIST, listString);
                 statusCode = StatusCode.SUCCESS;
                 break;
             }
 
+            case Opcodes.GET_AUCTION_ITEM:{
+                logger.debug("Handling read command: GET_AUCTION_ITEM");
+                Long itemId = ((GetAuctionItemMessage)message).getItemId();
+                AuctionItem item = this.auctionItemsList.findById(itemId);
+                this.channelServices.sendMessageToClient(Opcodes.AUCTION_ITEM, item.toPrettyString());
+                statusCode = StatusCode.SUCCESS;
+                break;
+            }
+
             case Opcodes.ADD_BID:{
                 logger.debug("Handling read command: ADD_BID");
-
                 statusCode = this.channelServices.handleAddBid((AddBidMessage) message);
+
+                Long itemId = ((AddBidMessage) message).getAuctionItemId();
+                handleReadCommand(Opcodes.GET_AUCTION_ITEM,new GetAuctionItemMessage(itemId));
                 break;
             }
 

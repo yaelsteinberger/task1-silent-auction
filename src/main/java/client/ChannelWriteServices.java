@@ -6,10 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
 import entity.command.Command;
 import entity.command.Opcodes;
-import entity.command.schemas.BaseMessage;
-import entity.command.schemas.EmptyMessage;
-import entity.command.schemas.LoginUserMessage;
-import entity.command.schemas.MessageToClientMessage;
+import entity.command.schemas.*;
+
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.StatusCode;
@@ -20,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChannelWriteServices {
@@ -44,18 +44,38 @@ public class ChannelWriteServices {
         this.mapper.writeValue(writer,writeCommand);
     }
 
-    public int handleWrite(int opcode) throws IOException {
+    public int handleWrite(int opcode, @Nullable Object requestData) throws IOException {
+        logger.debug("Send user request {}", opcode);
         int statusCode = StatusCode.SUCCESS;
 
         switch(opcode){
-            case Opcodes.CLIENT_CONNECTED:{
+            case Opcodes.CLIENT_CONNECTED:
+            case Opcodes.GET_AUCTION_LIST:{
                 sendMessageToServer(opcode,new EmptyMessage());
                 break;
             }
 
-            case Opcodes.LOGIN_CLIENT:
-            case Opcodes.REGISTER_CLIENT:{
+            case Opcodes.LOGIN_CLIENT:{
                 LoginUserMessage message = new LoginUserMessage(clientIdentityDetails);
+                sendMessageToServer(opcode,message);
+                break;
+            }
+            case Opcodes.REGISTER_CLIENT:{
+                LoginUserMessage message = new LoginUserMessage((User) requestData);
+                sendMessageToServer(opcode,message);
+                break;
+            }
+
+            case Opcodes.GET_AUCTION_ITEM:{
+                GetAuctionItemMessage message = new GetAuctionItemMessage((Long) requestData);
+                sendMessageToServer(opcode,message);
+                break;
+            }
+
+            case Opcodes.ADD_BID:{
+                Long itemId = ((Map<String,Long>)requestData).get("item");
+                Long value = ((Map<String,Long>)requestData).get("value");
+                AddBidMessage message = new AddBidMessage(itemId,value);
                 sendMessageToServer(opcode,message);
                 break;
             }

@@ -106,66 +106,6 @@ public class ServerReadChannel implements ReadChannel {
             catch (IOException e) {logger.error("{}", e.getMessage());}
         }
     }
-
-    private boolean authenticateClient() throws IOException {
-
-        /* When client is connected send a message to login or signup */
-        boolean isClientAuth = false;
-
-        logger.debug("Sending welcome message to client");
-        sendMessageToClient(Opcodes.WELCOME, getWelcomeMessage());
-
-        while(!isClientAuth){
-            /* wait for client response */
-            Command readCommand = read();
-            isClientAuth = ((handleRead(readCommand) == StatusCode.SUCCESS));
-        }
-        return isClientAuth;
-    }
-
-    private void handleNotExistAccount() throws IOException {
-        logger.debug("Sending message to client that account doesn't exist");
-        String message = "No account exists, please register (type \"exit\" to exit): ";
-        sendMessageToClient(Opcodes.REGISTER_CLIENT, message);
-    }
-
-    private int handleRegisterClient(HttpResponse response) throws IOException {
-        int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
-
-        if(response.isError()){
-            switch (response.getStatusCode()){
-                case HttpStatusCode.FORBIDDEN: {
-                    statusCode = StatusCode.ACCOUNT_ALREADY_EXISTS;
-
-                    logger.error("Cannot signup client - Account already exists");
-                    String message = "You are trying to signup to an existing account\nIf you cannot login, then contact the administrators";
-                    sendMessageToClient(Opcodes.ACTION_FAILED, message);
-                    break;
-                }
-            }
-        }else{
-            logger.debug("Registration successful - Sending welcome message to client");
-            sendMessageToClient(Opcodes.WELCOME, getWelcomeMessage());
-        }
-
-        return statusCode;
-    }
-
-    private void sendMessageToClient(int opcode, String message) throws IOException {
-        logger.debug("Send message opcode {} to Client",opcode);
-        MessageToClientMessage messageToClient = new MessageToClientMessage(message);
-        Command writeCommand = new Command(opcode, messageToClient);
-        OutputStream writer = socket.getOutputStream();
-        this.mapper.writeValue(writer,writeCommand);
-    }
-
-    private String getWelcomeMessage(){
-        return "WELCOME TO SILENT AUCTION\n" +
-                "Please login or register if you don't have an account: \n" +
-                "-> To login type \"login\" and press Enter\n" +
-                "-> To register type \"reg\" and press Enter\n" +
-                "To exit type \"exit\" and press Enter";
-    }
 }
 
 

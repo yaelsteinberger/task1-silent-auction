@@ -55,23 +55,34 @@ public class ClientReadChannel implements ReadChannel {
     public int handleRead(Command command) throws IOException {
         int statusCode = StatusCode.FATAL_ERROR;
         logger.debug("Handling read command: {}",command.getOpcode());
+
+        /* Display message to client */
+        int opcode = command.getOpcode();
+        String message = ((MessageToClientMessage)command.getMessage()).getMessage();
+        displayMessageToClient(message);
+
+        /* handle message */
         try {
-            switch(command.getOpcode()){
+            switch(opcode){
 
                 case Opcodes.WELCOME:{
-                    statusCode = this.channelReadServices.handleWelcomeMessage((MessageToClientMessage) command.getMessage());
+                    statusCode = this.channelReadServices.handleWelcomeMessage();
                     break;
                 }
 
                 case Opcodes.REGISTER_CLIENT:{
-                    statusCode = this.channelReadServices.handleRegisterClientMessage((MessageToClientMessage) command.getMessage());
+                    statusCode = this.channelReadServices.handleRegisterClientMessage();
                     break;
                 }
 
-                case Opcodes.LOGIN_SUCCESS:{
-                    this.channelReadServices.handleLoginSuccessMessage((MessageToClientMessage)command.getMessage());
+                case Opcodes.LOGIN_SUCCESS:
+                case Opcodes.AUCTION_ITEM:
+                case Opcodes.AUCTION_LIST:{
+                    statusCode = this.channelReadServices.handleUserRequest();
                     break;
                 }
+
+
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -101,6 +112,11 @@ public class ClientReadChannel implements ReadChannel {
             try {socket.close();}
             catch (IOException e) {logger.error("{}", e.getMessage());}
         }
+    }
+
+
+    private void displayMessageToClient(String message){
+        System.err.println(message);
     }
 }
 

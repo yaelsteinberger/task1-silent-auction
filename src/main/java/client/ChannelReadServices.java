@@ -4,17 +4,18 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
-import entity.command.Command;
 import entity.command.Opcodes;
-import entity.command.schemas.BaseMessage;
-import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class ChannelReadServices {
     private final static Logger logger = LoggerFactory.getLogger(ChannelReadServices.class);
@@ -43,39 +44,47 @@ public class ChannelReadServices {
 
     public void handleClientConnectionEvent() throws IOException {
         logger.debug("Sending CLIENT_CONNECTED to Server");
-        this.channelWriteServices.handleWrite(Opcodes.CLIENT_CONNECTED);
+        this.channelWriteServices.handleWrite(Opcodes.CLIENT_CONNECTED, null);
     }
 
-    public int handleWelcomeMessage(MessageToClientMessage message) throws IOException, InterruptedException {
-
-        /* Display on screen the welcome message and wait for user input */
-        System.err.println(message);
+    public int handleWelcomeMessage() throws IOException, InterruptedException {
 
         /* get from user an input */
-        int opcode = getUserInputOpcodeCommand();
+        int opcode = (int) getUserRequest().get("opcode");
+
 
         if(opcode == Opcodes.REGISTER_CLIENT){
-            opcode = getUserRegistrationDetails();
+            return handleRegisterClientMessage();
         }
 
-        return this.channelWriteServices.handleWrite(opcode);
+        return this.channelWriteServices.handleWrite(opcode,null);
     }
 
-    public int handleRegisterClientMessage(MessageToClientMessage message) throws IOException {
-        /* Display on screen the message and wait for user input */
-        System.err.println(message);
-
-        int opcode = getUserRegistrationDetails();
-
-        return this.channelWriteServices.handleWrite(opcode);
+    public int handleRegisterClientMessage() throws IOException {
+        Map result = getUserRegistrationDetails();
+        return this.channelWriteServices.handleWrite((Integer) result.get("opcode"), result.get("data"));
     }
 
-    public void handleLoginSuccessMessage(MessageToClientMessage message){
-        /* Display on screen the message and wait for user input */
-        System.err.println(message);
+//    public int handleLoginSuccessMessage() throws IOException, InterruptedException {
+//        Map result = getUserRequest();
+//
+//        return this.channelWriteServices.handleWrite(
+//                (Integer) result.get("opcode"),
+//                result.get("data"));
+//    }
+
+    public int handleUserRequest() throws IOException, InterruptedException {
+        logger.debug("Handling User Request...");
+        Map result = getUserRequest();
+
+        return this.channelWriteServices.handleWrite(
+                (Integer) result.get("opcode"),
+                result.get("data"));
+
     }
 
-    private int getUserRegistrationDetails() throws IOException {
+    private Map getUserRegistrationDetails() throws IOException {
+        Map result = new HashMap();
         AtomicInteger opcode = new AtomicInteger(Opcodes.NONE);
 
         HashMap<String,String> userDetails = new HashMap<>(){{
@@ -94,7 +103,7 @@ public class ChannelReadServices {
                     String dataGram = kbd.readLine();
 
                     /* check input isn't to exit */
-                    if(parseUserInputCommand(dataGram) == Opcodes.EXIT){
+                    if((Integer)parseUserInputCommand(dataGram).get("opcode") == Opcodes.EXIT){
                         opcode.set(Opcodes.EXIT);
                     }else{
                         userDetails.put(key,dataGram);
@@ -108,16 +117,22 @@ public class ChannelReadServices {
         });
 
         if(opcode.get() != Opcodes.EXIT){
-            clientIdentityDetails = mapper.convertValue(userDetails, User.class);
+
+            User user = mapper.convertValue(userDetails, User.class);
+            result.put("data",user);
             opcode.set(Opcodes.REGISTER_CLIENT);
+        }else{
+            result.put("data","");
         }
 
-        return opcode.get();
+        result.put("opcode",opcode.get());
 
+        return result;
     }
 
-    private int getUserInputOpcodeCommand() throws IOException, InterruptedException {
-        int opcode;
+    private Map getUserRequest() throws IOException, InterruptedException {
+        Map result;
+
         String dataGram;
 
         while(true) {
@@ -126,27 +141,99 @@ public class ChannelReadServices {
             System.out.println("[YOU] > ");
             dataGram = kbd.readLine();
 
-            opcode = parseUserInputCommand(dataGram);
+            result = parseUserInputCommand(dataGram);
 
-            if(opcode != Opcodes.NONE) break;
+            if((Integer)result.get("opcode") != Opcodes.NONE) break;
 
             System.out.println("Unrecognised command, please try again... ");
-
         }
-        return opcode;
+
+        return result;
     }
 
-    private int parseUserInputCommand(String command) {
+    private Map parseUserInputCommand(String command) {
+        Map result = new HashMap();
+
         int opcode = Opcodes.NONE;
 
         opcode =
                 command.equals("exit") ? Opcodes.EXIT : (
-                        command.contains("login") ? Opcodes.LOGIN_CLIENT : (
-                                command.contains("reg") ? Opcodes.REGISTER_CLIENT : opcode));
+                command.contains("login") ? Opcodes.LOGIN_CLIENT : (
+                command.contains("reg") ? Opcodes.REGISTER_CLIENT : (
+                command.equals("list") ? Opcodes.GET_AUCTION_LIST : (
+                command.contains("bid") ? Opcodes.ADD_BID : (
+                command.contains("item") ? Opcodes.GET_AUCTION_ITEM : opcode)))));
 
-        /* DEBUG */
-        opcode = command.equals("debug") ? Opcodes.DEBUG : opcode;
-        return opcode;
+
+        Optional inputData = parseInputData(opcode, command);
+
+        if(!inputData.isPresent()){
+            opcode = Opcodes.NONE;
+        }else{
+            result.put("data",inputData.get());
+        }
+
+        result.put("opcode",opcode);
+
+        return result;
+    }
+
+    private Optional parseInputData(int opcode, String inputData){
+        Optional parsedInputData = Optional.empty();
+
+        switch(opcode){
+            case Opcodes.GET_AUCTION_ITEM:{
+                String[] arr = inputData.trim().split(" ");
+
+                /* assuming the last cell has the item id */
+                String idStr = arr[arr.length-1];
+
+                /* verify the value is a number */
+                try{
+                    Long itemId = Long.parseLong(idStr);
+                    parsedInputData = Optional.of(itemId);
+                }
+                catch (Exception e){
+                    /* Display error to user */
+                    System.err.println("Item id is invalid\n");
+                }
+                break;
+            }
+
+            case Opcodes.ADD_BID:{
+                Map<String,Long> retInput = new HashMap();
+                String[] arr = inputData.trim().split(" ");
+
+                for (String input : arr) {
+                    if(input.contains("item:") || input.contains("value:")){
+                        String[] inputArr = input.split(":");
+
+                        /* verify the value is a number */
+                        try{
+                            Long value = Long.parseLong(inputArr[1]);
+                            retInput.put(inputArr[0],value);
+                        }
+                        catch (Exception e){
+                            /* Display error to user */
+                            System.err.println("Request details are invalid\n");
+                            break;
+                        }
+                    }
+                }
+
+                if(retInput.size() == 2){
+                    parsedInputData = Optional.of(retInput);
+                }
+
+                break;
+            }
+
+            default:
+                parsedInputData = Optional.of("");
+
+        }
+
+        return parsedInputData;
     }
 }
 

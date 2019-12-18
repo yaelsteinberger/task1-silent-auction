@@ -99,7 +99,7 @@ public class ChannelWriteServicesTest {
     @Test
     public void loginMessageTest() throws IOException {
         // When
-        channelWriteServices.handleWrite(Opcodes.LOGIN_CLIENT);
+        channelWriteServices.handleWrite(Opcodes.LOGIN_CLIENT, null);
 
         InputStream reader = client.getInputStream();
         Command command = mapper.readValue(reader,Command.class);
@@ -117,7 +117,7 @@ public class ChannelWriteServicesTest {
     @Test
     public void registerMessageTest() throws IOException {
         // When
-        channelWriteServices.handleWrite(Opcodes.REGISTER_CLIENT);
+        channelWriteServices.handleWrite(Opcodes.REGISTER_CLIENT, null);
 
         InputStream reader = client.getInputStream();
         Command command = mapper.readValue(reader,Command.class);

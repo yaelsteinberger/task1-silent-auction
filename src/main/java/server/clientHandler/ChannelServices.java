@@ -128,17 +128,18 @@ public class ChannelServices {
         /* when user logged in successfully, send the auction items list with instructions */
 
         String list = auctionItemsList.itemsListToPrettyString();
-        String message = "YOU HAVE BEEN LOGGED IN SUCCESSFULLY\n" +
-                "AUCTION ITEMS LIST:" + list + "\n\n" +
+        String message = "YOU HAVE BEEN LOGGED IN SUCCESSFULLY!\n\n" +
+                list + "\n\n" +
                 getAuctionInstructions();
 
         sendMessageToClient(Opcodes.LOGIN_SUCCESS, message);
     }
 
     private String getAuctionInstructions(){
-        return  "-> To display an auction item details \"item [item id]\" and press Enter\n" +
+        return  "-> To display an auction item details type \"item [item id]\" and press Enter\n" +
                 "-> To display auction items list for an item type \"list\" and press Enter\n" +
-                "-> To add a bid type \"bid\" and press Enter\n" +
+                "-> To add a bid type \"bid item:[id] value:[value*]\" and press Enter\n" +
+                "* Invalid value will not be accepted\n" +
                 "To exit you can type \"exit\" and press Enter\n";
     }
 }

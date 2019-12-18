@@ -15,6 +15,8 @@ public interface Opcodes {
     int WINNER_ANNOUNCEMENT = 10;
     int CLIENT_CONNECTED = 11;
     int LOGIN_SUCCESS = 12;
+    int GET_AUCTION_ITEM = 13;
+    int AUCTION_ITEM = 14;
     int EXIT = 100;
     int DEBUG = 666;
 }
