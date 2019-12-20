@@ -6,6 +6,7 @@ import auctionList.AuctionItemsList;
 import entity.User;
 import entity.auction.Bidder;
 import entity.command.Command;
+import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.RegisterUserMessage;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -34,7 +35,7 @@ public class ServerReadChannelTest {
     private static AuctionItemsList auctionItemsList;
     private static ServerReadChannel serverReadChannel;
     private static Socket client;
-    private static Properties props;
+//    private static Properties props;
     private static ServerSocket listener;
 
 
@@ -43,19 +44,19 @@ public class ServerReadChannelTest {
     public static void setup() throws IOException, InterruptedException {
 
         //Given
-        String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
-        props = ServerProperties.getProperties();
-        String mockHost = (String) props.get("authServer.host");
-        String mockPort = (String) props.get("authServer.port");
-        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
+//        String propFilePath = "src\\test\\resources\\mockConfig.properties";
+//        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
+//        props = ServerProperties.getProperties();
+//        String mockHost = (String) props.get("authServer.host");
+//        String mockPort = (String) props.get("authServer.port");
+//        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
 
         auctionItemsList = MockAuctionItems.generateAuctionItemsList();
         users = MockUsers.getUsers();
 
         /* run listener */
-        listener = new ServerSocket(Integer.parseInt((String)(props.get("server.port"))));
+        listener = new ServerSocket(MockTestProperties.getServerPort());
 
     }
 
@@ -102,7 +103,7 @@ public class ServerReadChannelTest {
             usersList = new UsersList();
 
             Map expectation = (Map)expectations.get(httpStatusCode);
-            runTestReadLoginCommand(command,httpStatusCode,expectation);
+            runTestReadLoginCommand(users[0], command,httpStatusCode,expectation);
         }
     }
 
@@ -184,6 +185,7 @@ public class ServerReadChannelTest {
     }
 
     private void runTestReadLoginCommand(
+            User user,
             Command command,
             HttpStatusCode httpStatusCode,
             Map expectation) throws IOException {
@@ -193,7 +195,7 @@ public class ServerReadChannelTest {
 
         //Given
         int sizeBefore = usersList.getUsersList().size();
-        MockAuthServer.isUserAuthExpectations(((RegisterUserMessage)command.getMessage()).getUser(), httpStatusCode);
+        MockAuthServer.isUserAuthExpectations(user, httpStatusCode);
 
         //When
         int status = serverReadChannel.handleRead(command);

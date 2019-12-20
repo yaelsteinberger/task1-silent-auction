@@ -17,8 +17,8 @@ public class AuctionItemsList {
         auctionItemsList = auctionItems
                 .collect(
                     Collectors.toMap(
-                            (x) -> itemId.getAndIncrement(),
-                            (x) -> x
+                            (item) -> itemId.getAndIncrement(),
+                            (item) -> item
                     ));
     }
 
