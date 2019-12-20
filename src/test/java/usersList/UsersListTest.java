@@ -1,30 +1,30 @@
 package usersList;
 
-import MOCKs.*;
+import MOCKs.MockAuthServer;
+import MOCKs.MockSocketTarget;
+import MOCKs.MockUsers;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import entity.HttpResponse;
 import entity.User;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
-import server.ServerProperties;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
-//import static org.hamcrest //.samePropertyValuesAs;
-//import static org.hamcrest.Matchers.samePropertyValuesAs;
-import static org.junit.Assert.assertEquals;
 
 public class UsersListTest {
-    static private List<User> users;
+    static private User[] users;
     private UsersList usersList;
     private static ServerSocket listener;
     private static Socket client;
@@ -35,7 +35,7 @@ public class UsersListTest {
 
         //Given
         MockAuthServer.startServer();
-        users = Arrays.asList(MockUsers.getUsers());
+        users = MockUsers.getUsers();
 
         /* run listener */
 //        listener = new ServerSocket(MockTestProperties.getServerPort());
@@ -134,13 +134,13 @@ public class UsersListTest {
     }
 
     @Test
-    public void removeByUserNameTest() {
+    public void findByUserNameTest() {
 
         //Given
-        String userNameToRemove = "username2";
+        String userName = users[1].getUserName();
 
         //When
-        users.forEach(user -> {
+        for (User user : users) {
             try {
                 MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
                 usersList.loginUser(user.getUserName());
@@ -148,8 +148,34 @@ public class UsersListTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
 
-        });
+        User user = usersList.findByUserName(userName);
+
+        //Then
+        User expectedUser = users[1];
+
+
+        assertThat(user, samePropertyValuesAs(expectedUser));
+    }
+
+    @Test
+    public void removeByUserNameTest() {
+
+        //Given
+        String userNameToRemove = users[1].getUserName();
+
+        //When
+        for (User user : users) {
+            try {
+                MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
+                usersList.loginUser(user.getUserName());
+                MockAuthServer.resetServer();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+
         usersList.removeByUserName(userNameToRemove);
 
         //Then
@@ -164,7 +190,7 @@ public class UsersListTest {
         int sizeBefore = usersList.getUsersList().size();
 
         //When
-        users.forEach(user -> {
+        for (User user : users) {
             try {
                 MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
                 usersList.loginUser(user.getUserName());
@@ -172,8 +198,8 @@ public class UsersListTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        };
 
-        });
         int sizeAfter = usersList.getUsersList().size();
 
         //Then
