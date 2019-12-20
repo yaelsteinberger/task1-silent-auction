@@ -35,10 +35,10 @@ public class MockAuthResponseBody<T> {
         String date = new Date().toString();
 
         return Collections.unmodifiableMap(new LinkedHashMap<>() {{
-            put("timestamp", date);
+            put("timestamp", MockGenericValues.DONT_CARE);
             put("status", status.code());
             if((status.code() >= 400) && (status.code() < 600)){put("error", status.name());}
-            if (message != null) {put("message", message);}
+            if (message != null) {put("message", MockGenericValues.DONT_CARE);}
             put("path", path);
             if (data != null) {put("data", data);}
         }});

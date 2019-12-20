@@ -19,16 +19,17 @@ public class Client {
 
     private static final int CHAT_CHANNELS_NUM = 2;// Read and Write
     private static Properties props = null;
-    private static User clientIdentityDetails;
+//    private static User clientIdentityDetails;
     private static Map<String, Command> commands;
+    private final static String propFilePath = "clientConfig.properties";
 
 
     public static void main(String[] args) throws IOException {
 
-        ClientProperties.readConfigPropertiesFile();
+        ClientProperties.setPropsFromConfigPropertiesFile(propFilePath);
         props = ClientProperties.getProperties();
 
-//        clientIdentityDetails = GenerateUser.generateName();
+//        clientIdentityDetails = GenerateUser.generateName(true);
 
         runClient();
     }
@@ -63,5 +64,9 @@ public class Client {
 
         socket.close();
         System.exit(0);
+    }
+
+    public static void getClientIdentityDetails(){
+
     }
 }

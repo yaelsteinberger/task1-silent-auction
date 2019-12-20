@@ -5,17 +5,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import entity.User;
 
 
-public class LoginUserMessage extends BaseMessage {
-    private final String userName;
+public class RegisterUserMessage extends BaseMessage {
+    private final User user;
 
     /* to be able to use ObjectMapper to read the Command and convert it as this type
     must clarify which is the class's constructor and it's members for the conversion */
     @JsonCreator
-    public LoginUserMessage(@JsonProperty("user")  String userName) {
-        this.userName = userName;
+    public RegisterUserMessage(@JsonProperty("user")  User user) {
+        this.user = user;
     }
 
-    public String getUserName() {
-        return userName;
+    public User getUser() {
+        return user;
     }
 }

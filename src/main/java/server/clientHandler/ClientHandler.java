@@ -1,4 +1,4 @@
-package server;
+package server.clientHandler;
 
 import auctionList.AuctionItemsList;
 import usersList.AbstractUsersList;
@@ -15,14 +15,16 @@ import java.util.concurrent.Future;
 public class ClientHandler implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(ClientHandler.class);
 
-    private static final int CHANNELS_NUM = 1; // Read
+    private static final int CHANNELS_NUM = 2; // Read, Write
     private final Socket socket;
     private final AbstractUsersList usersList;
     private final AuctionItemsList auctionItemsList;
 
-
-
-    public ClientHandler(Socket client, AbstractUsersList usersList, AuctionItemsList auctionItemsList) throws IOException {
+    public ClientHandler(
+            Socket client,
+            AbstractUsersList usersList,
+            AuctionItemsList auctionItemsList
+    ) throws IOException {
         this.socket = client;
         this.usersList = usersList;
         this.auctionItemsList = auctionItemsList;

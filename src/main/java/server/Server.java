@@ -5,6 +5,7 @@ import auctionList.AuctionItemsList;
 import entity.auction.Item;
 import file.reader.InputFileReader;
 import file.reader.InputFileReaderFactory;
+import server.clientHandler.ClientHandler;
 import usersList.AbstractUsersList;
 import usersList.UsersList;
 import org.slf4j.Logger;
@@ -13,12 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 /*
@@ -38,7 +36,7 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
 
-        ServerProperties.readConfigPropertiesFile(propFilePath);
+        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
         props = ServerProperties.getProperties();
         userList = new UsersList();
         auctionItemsList = getAuctionItemsList();

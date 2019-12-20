@@ -36,7 +36,7 @@ public class HttpResponse{
         return timestamp;
     }
 
-    public Integer getStatusCode() {
+    public Integer getStatus() {
         return status;
     }
 
