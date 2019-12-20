@@ -17,6 +17,10 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
+//import static org.hamcrest //.samePropertyValuesAs;
+//import static org.hamcrest.Matchers.samePropertyValuesAs;
+import static org.junit.Assert.assertEquals;
 
 public class UsersListTest {
     static private List<User> users;
@@ -29,7 +33,7 @@ public class UsersListTest {
 
         //Given
         String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.readConfigPropertiesFile(propFilePath);
+        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
         String mockHost = (String) ServerProperties.getProperties().get("authServer.host");
         String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
         MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
@@ -56,19 +60,19 @@ public class UsersListTest {
 
         //Given
         User user = new User(
-                "username4",
+                "userName4",
                 "FirstName4",
                 "LastName4");
 
         //When
-        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.OK_200);
-        int status = usersList.loginUser(user);
+        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
+        int status = usersList.loginUser(user.getUserName());
         User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
         int expectedStatusCode = StatusCode.SUCCESS;
         assertThat(status, is(expectedStatusCode));
-        assertThat(userInList, is(user));
+        assertThat(userInList, samePropertyValuesAs(user));
     }
 
     @Test
@@ -76,13 +80,13 @@ public class UsersListTest {
 
         //Given
         User user = new User(
-                "username4",
+                "userName4",
                 "FirstName4",
                 "LastName4");
 
         //When
-        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.FORBIDDEN_403);
-        int status = usersList.loginUser(user);
+        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.FORBIDDEN_403);
+        int status = usersList.loginUser(user.getUserName());
         User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
@@ -96,13 +100,13 @@ public class UsersListTest {
 
         //Given
         User user = new User(
-                "username4",
+                "userName4",
                 "FirstName4",
                 "LastName4");
 
         //When
-        MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.NOT_FOUND_404);
-        int status = usersList.loginUser(user);
+        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.NOT_FOUND_404);
+        int status = usersList.loginUser(user.getUserName());
         User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
@@ -120,8 +124,8 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                MockAuthServer.isUserAuthExpectations(user.getUserName(),HttpStatusCode.OK_200);//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
-                usersList.loginUser(user);
+                MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                usersList.loginUser(user.getUserName());
                 MockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -144,8 +148,8 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                MockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
-                usersList.loginUser((User) user);
+                MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
+                usersList.loginUser(user.getUserName());
                 MockAuthServer.resetServer();
             } catch (IOException e) {
                 e.printStackTrace();

@@ -18,8 +18,8 @@ import static org.mockserver.model.HttpResponse.response;
 
 public class MockAuthServer {
 
-    private static String host;
-    private static Integer port;
+    private static String host = MockTestProperties.getAuthServerHost();
+    private static Integer port = MockTestProperties.getAuthServerPort();
     private static ClientAndServer mockServer;
 
     public static void setAttributes (String myHost, Integer myPort)  {
@@ -41,14 +41,13 @@ public class MockAuthServer {
     }
 
 
-    public static void isUserAuthExpectations(String userName, HttpStatusCode status) throws IOException {
-
-        String path = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
+    public static void isUserAuthExpectations(User user, HttpStatusCode status) throws IOException {
+        String path = "/" + PathNames.IS_USER_AUTH.replace("{userName}",user.getUserName());
         boolean isExpectActive = (status.code() == HttpStatusCode.OK_200.code());
-        String message = isExpectActive ? null : "Don't Care";
-        Map data = getDataByStatus(status);
-
+        String message = isExpectActive ? null : MockGenericValues.DONT_CARE;
+        Map data = getIsUserAuthDataByStatus(status,user);
         MockAuthResponseBody<Map> responseBody = new MockAuthResponseBody<Map>(status, path, message, data);
+
         mockServer
                 .when(
                         request()
@@ -67,7 +66,7 @@ public class MockAuthServer {
 
         String path = "/" + PathNames.REGISTER_USER;
         boolean isExpectActive = (status.code() == HttpStatusCode.OK_200.code());
-        String message = isExpectActive ? null : "Don't Care";
+        String message = isExpectActive ? null : MockGenericValues.DONT_CARE;
         HashMap data = !isExpectActive ? null :
                 new HashMap<String,Object>(){{
             put("id",1);
@@ -93,10 +92,16 @@ public class MockAuthServer {
     }
 
 
-    private static Map getDataByStatus(HttpStatusCode status){
+    private static Map getIsUserAuthDataByStatus(HttpStatusCode status, User user){
         boolean isActive = (status.code() == HttpStatusCode.OK_200.code());
-        boolean isDoesntExists = (status.code() == HttpStatusCode.NOT_FOUND_404.code());
-        return isDoesntExists ? null : new HashMap<String,Boolean>() {{put("active",isActive);}};
+        return !isActive ? null :
+                new HashMap<String,Object>(){{
+                    put("id",1);
+                    put("firstName",user.getFirstName());
+                    put("lastName",user.getLastName());
+                    put("userName",user.getUserName());
+                    put("active",true);
+                }};
     }
 }
 

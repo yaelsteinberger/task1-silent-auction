@@ -15,10 +15,10 @@ public class MockSocketTarget {
     }
 
     public void openSocketToSource() throws IOException {
-        String port = (String) props.get("server.port");
+//        Integer port = MockTestProperties.getServerPort();//(String) props.get("server.port");
         this.socket = new Socket(
-                (String)props.get("server.host"),
-                Integer.parseInt(port)
+                MockTestProperties.getServerHost(),
+                MockTestProperties.getServerPort()
         );
     }
 

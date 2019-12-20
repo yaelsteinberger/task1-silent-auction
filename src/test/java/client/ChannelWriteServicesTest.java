@@ -9,28 +9,23 @@ import entity.command.Command;
 import entity.command.Opcodes;
 import entity.command.schemas.BaseMessage;
 import entity.command.schemas.EmptyMessage;
-import entity.command.schemas.LoginUserMessage;
-import entity.command.schemas.MessageToClientMessage;
+import entity.command.schemas.RegisterUserMessage;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ServerProperties;
-import util.PrintHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.isA;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ChannelWriteServicesTest {
@@ -51,7 +46,7 @@ public class ChannelWriteServicesTest {
         //Given
         serverThread = Executors.newFixedThreadPool(1);
         String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.readConfigPropertiesFile(propFilePath);
+        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
         props = ServerProperties.getProperties();
         mapper = new ObjectMapper();
         mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -67,7 +62,7 @@ public class ChannelWriteServicesTest {
         client = mockSocketTarget.getSocket();
 
         testUser = new User("username","user","name");
-        channelWriteServices = new ChannelWriteServices(client,testUser);
+        channelWriteServices = new ChannelWriteServices(client);
     }
 
     @AfterClass
@@ -103,7 +98,7 @@ public class ChannelWriteServicesTest {
 
         InputStream reader = client.getInputStream();
         Command command = mapper.readValue(reader,Command.class);
-        LoginUserMessage message = (LoginUserMessage) command.getMessage();
+        RegisterUserMessage message = (RegisterUserMessage) command.getMessage();
         User user = message.getUser();
 
         //Then
@@ -121,7 +116,7 @@ public class ChannelWriteServicesTest {
 
         InputStream reader = client.getInputStream();
         Command command = mapper.readValue(reader,Command.class);
-        LoginUserMessage message = (LoginUserMessage) command.getMessage();
+        RegisterUserMessage message = (RegisterUserMessage) command.getMessage();
         User user = message.getUser();
 
         //Then

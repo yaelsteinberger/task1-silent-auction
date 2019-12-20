@@ -1,185 +1,211 @@
 package authentucate;
 
-import MOCKs.MockAuthServer;
+import MOCKs.*;
 
 //import MOCKs.MockAuthServer;
 import authenticate.HttpAuthApi;
 import authenticate.PathNames;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.HttpResponse;
 import entity.User;
+import entity.command.Command;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
-import server.ServerProperties;
+import server.clientHandler.ServerReadChannel;
+import util.PrintHelper;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
+
 
 public class HttpServicesTest {
-    static private HttpAuthApi httpAuthApi;
+    private static HttpAuthApi httpAuthApi;
+    private static ServerReadChannel serverReadChannel;
+    private static Socket client;
+    private static Properties props;
+    private static ServerSocket listener;
+    private static User user;
+    private static ObjectMapper mapper;
+    private static String path;
+
 
     @BeforeClass
-    static public void setup() throws InterruptedException {
+    static public void setup() throws InterruptedException, IOException {
 
         //Given
-        String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.readConfigPropertiesFile(propFilePath);
-        String mockHost = (String) ServerProperties.getProperties().get("authServer.host");
-        String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
-        httpAuthApi = new HttpAuthApi();
-        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
+
+        /* run listener */
+        listener = new ServerSocket(MockTestProperties.getServerPort());
+
+        mapper = new ObjectMapper();
+        httpAuthApi = new HttpAuthApi();
+        path = "/user/";
+        user = new User(
+                "userName",
+                "FirstName",
+                "LastName");
     }
 
     @AfterClass
-    static public void tearDown() throws JsonProcessingException {
+    public static void tearDown() throws IOException {
         MockAuthServer.stopServer();
+        listener.close();
     }
 
     @Before
-    public void cleanServerCache(){
+    public void cleanServerCache() {
         /* Before each test clear the cache from any previous responses and expectations */
         MockAuthServer.resetServer();
     }
 
-    @Test
-    public void isAuthActiveTest() {
+    private void connectToClientSocket() throws IOException {
+        /* run client */
+        MockSocketTarget mockClient = new MockSocketTarget();
+        mockClient.openSocketToSource();
 
-        // Given
-        String userName = "username";
-        HttpStatusCode status = HttpStatusCode.OK_200;
+        /* get client socket */
+        client = listener.accept();
 
-        // When
-        try {
-            MockAuthServer.isUserAuthExpectations(userName,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
-
-            //Then
-            String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
-
-            assertThat(response.isError(), is(false));
-            assertThat(response.getPath(), is(expectedPath));
-            assertThat(response.getStatusCode(), is(status.code()));
-            assertThat(response.getError(), nullValue());
-            assertThat(response.getMessage(), nullValue());
-            assertThat(response.getData().get("active"), is(true));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        /* create new readChannel */
+//        serverReadChannel = new ServerReadChannel(client,null,null);
     }
 
     @Test
-    public void isAuthDisabledTest()  {
-        // Given
-        String userName = "username";
-        HttpStatusCode status = HttpStatusCode.FORBIDDEN_403;
+    public void isAuthUserTest() throws IOException {
+        String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",user.getUserName());
 
-        // When
-        try {
-            MockAuthServer.isUserAuthExpectations(userName,status);
-            HttpResponse response = (HttpResponse) httpAuthApi.isUserAuth(userName);
+        Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
+            put(HttpStatusCode.OK_200,
+                new HttpResponse(
+                        MockGenericValues.DONT_CARE,
+                        HttpStatusCode.OK_200.code(),
+                        expectedPath,
+                        new HashMap<String,Object>(){{
+                                put("id", 1);
+                                put("firstName", user.getFirstName());
+                                put("lastName", user.getLastName());
+                                put("userName", user.getUserName());
+                                put("active", true);
+                            }},
+                    null,
+                    null
+                ));
+                put(HttpStatusCode.NOT_FOUND_404,
+                    new HttpResponse(
+                            MockGenericValues.DONT_CARE,
+                            HttpStatusCode.NOT_FOUND_404.code(),
+                            expectedPath,
+                            null,
+                            HttpStatusCode.NOT_FOUND_404.name(),
+                            MockGenericValues.DONT_CARE
+                    ));
+                put(HttpStatusCode.FORBIDDEN_403,
+                        new HttpResponse(
+                                MockGenericValues.DONT_CARE,
+                                HttpStatusCode.FORBIDDEN_403.code(),
+                                expectedPath,
+                                null,
+                                HttpStatusCode.FORBIDDEN_403.name(),
+                                MockGenericValues.DONT_CARE
+                        ));
+        }};
 
-            //Then
-            String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
+        Set<HttpStatusCode> httpStatusCodes = expectations.keySet();
 
-            assertThat(response.isError(), is(true));
-            assertThat(response.getStatusCode(), is(status.code()));
-            assertThat(response.getError(), is(status.name()));
-            assertThat(response.getMessage(), isA(String.class));
-            assertThat(response.getPath(), is(expectedPath));
-            assertThat(response.getData().get("active"), is(false));
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        //When
+        for (HttpStatusCode httpStatusCode : httpStatusCodes) {
+            HttpResponse expectation = (HttpResponse) expectations.get(httpStatusCode);
+            runTestIsAuthUser(user,httpStatusCode,expectation);
         }
+
     }
 
     @Test
-    public void isAuthNotExistsTest()  {
-        // Given
-        String userName = "username";
-        HttpStatusCode status = HttpStatusCode.NOT_FOUND_404;
-
-        // When
-        try {
-            MockAuthServer.isUserAuthExpectations(userName,status);
-            HttpResponse response = httpAuthApi.isUserAuth(userName);
-
-            //Then
-            String expectedPath = "/" + PathNames.IS_USER_AUTH.replace("{userName}",userName);
-
-//            PrintHelper.printPrettyInRed(response);
-            assertThat(response.isError(), is(true));
-            assertThat(response.getStatusCode(), is(status.code()));
-            assertThat(response.getError(), is(status.name()));
-            assertThat(response.getMessage(), isA(String.class));
-            assertThat(response.getPath(), is(expectedPath));
-            assertThat(response.getData(), nullValue());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void registerUserSuccessTest()  {
-        // Given
-        HttpStatusCode status = HttpStatusCode.OK_200;
-        User user = new User("username","FirstName","LastName");
-
-
-        // When
-        try {
-            MockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = httpAuthApi.registerUser(user);
-
-        //Then
+    public void registerUserTest() throws IOException {
         String expectedPath = "/" + PathNames.REGISTER_USER;
 
-        assertThat(response.isError(), is(false));
-        assertThat(response.getStatusCode(), is(status.code()));
-        assertThat(response.getError(), nullValue());
-        assertThat(response.getMessage(), nullValue());
-        assertThat(response.getPath(), is(expectedPath));
-        assertThat(response.getData(), isA(Map.class));
+        Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
+            put(HttpStatusCode.OK_200,
+                    new HttpResponse(
+                            MockGenericValues.DONT_CARE,
+                            HttpStatusCode.OK_200.code(),
+                            expectedPath,
+                            new HashMap<String,Object>(){{
+                                put("id", 1);
+                                put("firstName", user.getFirstName());
+                                put("lastName", user.getLastName());
+                                put("userName", user.getUserName());
+                                put("active", true);
+                            }},
+                            null,
+                            null
+                    ));
+            put(HttpStatusCode.FORBIDDEN_403,
+                    new HttpResponse(
+                            MockGenericValues.DONT_CARE,
+                            HttpStatusCode.FORBIDDEN_403.code(),
+                            expectedPath,
+                            null,
+                            HttpStatusCode.FORBIDDEN_403.name(),
+                            MockGenericValues.DONT_CARE
+                    ));
+        }};
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        Set<HttpStatusCode> httpStatusCodes = expectations.keySet();
+
+        //When
+        for (HttpStatusCode httpStatusCode : httpStatusCodes) {
+            HttpResponse expectation = (HttpResponse) expectations.get(httpStatusCode);
+            runTestRegisterUser(user,httpStatusCode,expectation);
         }
     }
 
+    private void runTestIsAuthUser(User user,
+                                   HttpStatusCode httpStatusCode,
+                                   HttpResponse expectation) throws IOException {
+        connectToClientSocket();
+        MockAuthServer.resetServer();
 
-    @Test
-    public void registerUserFailTest()  {
-        // Given
-        HttpStatusCode status = HttpStatusCode.FORBIDDEN_403;
-        User user = new User("username","FirstName","LastName");
+        //Given
+        MockAuthServer.isUserAuthExpectations(user, httpStatusCode);
 
+        //When
+        HttpResponse response = httpAuthApi.isUserAuth(user.getUserName());
 
-        // When
-        try {
-            MockAuthServer.registerAuthExpectations(user,status);
-            HttpResponse response = httpAuthApi.registerUser(user);
+        //Then
+        assertThat(response, samePropertyValuesAs(expectation));
 
-            //Then
-            String expectedPath = "/" + PathNames.REGISTER_USER;
+        client.close();
+    }
 
-            assertThat(response.isError(), is(true));
-            assertThat(response.getStatusCode(), is(status.code()));
-            assertThat(response.getError(), is(status.name()));
-            assertThat(response.getMessage(), isA(String.class));
-            assertThat(response.getPath(), is(expectedPath));
-            assertThat(response.getData(), nullValue());
+    private void runTestRegisterUser(User user,
+                                   HttpStatusCode httpStatusCode,
+                                   HttpResponse expectation) throws IOException {
+        connectToClientSocket();
+        MockAuthServer.resetServer();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //Given
+        MockAuthServer.registerAuthExpectations(user, httpStatusCode);
+
+        //When
+        HttpResponse response = httpAuthApi.registerUser(user);
+
+        //Then
+        assertThat(response, samePropertyValuesAs(expectation));
+
+        client.close();
     }
 }
