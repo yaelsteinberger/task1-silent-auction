@@ -22,20 +22,16 @@ public class ChannelReadServices {
 
     private final Socket socket;
     private final String userId;
-    private User clientIdentityDetails;
     private ChannelWriteServices channelWriteServices;
     private ObjectMapper mapper;
 
     /* Create stream to read from keyboard */
     private BufferedReader kbd;
 
-    public ChannelReadServices(
-            Socket socket,
-            User clientIdentityDetails) throws IOException {
+    public ChannelReadServices(Socket socket) throws IOException {
         this.socket = socket;
         this.userId = String.valueOf(socket.getLocalPort());
-        this.clientIdentityDetails = clientIdentityDetails;
-        this.channelWriteServices = new ChannelWriteServices(socket, clientIdentityDetails);
+        this.channelWriteServices = new ChannelWriteServices(socket);
         this.mapper = new ObjectMapper();
         this.kbd = new BufferedReader(new InputStreamReader(System.in));
         this.mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -64,14 +60,6 @@ public class ChannelReadServices {
         Map result = getUserRegistrationDetails();
         return this.channelWriteServices.handleWrite((Integer) result.get("opcode"), result.get("data"));
     }
-
-//    public int handleLoginSuccessMessage() throws IOException, InterruptedException {
-//        Map result = getUserRequest();
-//
-//        return this.channelWriteServices.handleWrite(
-//                (Integer) result.get("opcode"),
-//                result.get("data"));
-//    }
 
     public int handleUserRequest() throws IOException, InterruptedException {
         logger.debug("Handling User Request...");
@@ -164,7 +152,6 @@ public class ChannelReadServices {
                 command.contains("bid") ? Opcodes.ADD_BID : (
                 command.contains("item") ? Opcodes.GET_AUCTION_ITEM : opcode)))));
 
-
         Optional inputData = parseInputData(opcode, command);
 
         if(!inputData.isPresent()){
@@ -182,6 +169,20 @@ public class ChannelReadServices {
         Optional parsedInputData = Optional.empty();
 
         switch(opcode){
+            case Opcodes.LOGIN_CLIENT:{
+                String[] arr = inputData.trim().split(" ");
+
+                /* assuming the last cell has the item id */
+                String username = arr[arr.length-1];
+
+                if((username.length() > 0 && !username.contentEquals(" "))){
+                    parsedInputData = Optional.of(username);
+                }else{
+                    /* Display error to user */
+                    System.err.println("username is invalid\n");
+                }
+                break;
+            }
             case Opcodes.GET_AUCTION_ITEM:{
                 String[] arr = inputData.trim().split(" ");
 

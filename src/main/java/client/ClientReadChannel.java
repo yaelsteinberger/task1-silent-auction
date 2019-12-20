@@ -3,23 +3,16 @@ package client;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import entity.User;
 import entity.channels.ReadChannel;
 import entity.command.Command;
 import entity.command.Opcodes;
-import entity.command.schemas.BaseMessage;
-import entity.command.schemas.EmptyMessage;
-import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.StatusCode;
-import util.PrintHelper;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientReadChannel implements ReadChannel {
     private final static Logger logger = LoggerFactory.getLogger(ClientReadChannel.class);
@@ -28,12 +21,12 @@ public class ClientReadChannel implements ReadChannel {
     private final ChannelReadServices channelReadServices;
     private ObjectMapper mapper;
 
-    public ClientReadChannel(Socket socket, User clientIdentityDetails) throws IOException {
+    public ClientReadChannel(Socket socket) throws IOException {
         this.socket = socket;
         this.mapper = new ObjectMapper();
         this.mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         this.mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-        this.channelReadServices = new ChannelReadServices(socket,clientIdentityDetails);
+        this.channelReadServices = new ChannelReadServices(socket);
     }
 
     @Override

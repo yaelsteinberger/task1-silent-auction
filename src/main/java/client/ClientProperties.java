@@ -7,9 +7,8 @@ import java.util.Properties;
 
 public class ClientProperties {
     private static Properties properties;
-    private final static String propFilePath = "clientConfig.properties";
 
-    public static void readConfigPropertiesFile(){
+    public static void setPropsFromConfigPropertiesFile(String propFilePath){
         try ( InputStream inputStream = new FileInputStream(propFilePath)) {
             properties = new Properties();
             properties.load(inputStream);
@@ -17,6 +16,10 @@ public class ClientProperties {
         catch (NullPointerException | IOException e){
             properties  = readDefaultProps();
         }
+    }
+
+    public static void setProperties(Properties props) {
+        properties = props;
     }
 
     public static Properties getProperties() {

@@ -13,25 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.StatusCode;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChannelWriteServices {
     private final static Logger logger = LoggerFactory.getLogger(ChannelWriteServices.class);
 
-    private final Socket socket;
-    private User clientIdentityDetails;
+    private final Socket socket;;
     private ObjectMapper mapper;
 
-    public ChannelWriteServices(Socket socket, User clientIdentityDetails) throws IOException {
+    public ChannelWriteServices(Socket socket) throws IOException {
         this.socket = socket;
-        this.clientIdentityDetails = clientIdentityDetails;
         this.mapper = new ObjectMapper();
         this.mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         this.mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
@@ -56,12 +50,12 @@ public class ChannelWriteServices {
             }
 
             case Opcodes.LOGIN_CLIENT:{
-                LoginUserMessage message = new LoginUserMessage(clientIdentityDetails);
+                LoginUserMessage message = new LoginUserMessage((String) requestData);
                 sendMessageToServer(opcode,message);
                 break;
             }
             case Opcodes.REGISTER_CLIENT:{
-                LoginUserMessage message = new LoginUserMessage((User) requestData);
+                RegisterUserMessage message = new RegisterUserMessage((User) requestData);
                 sendMessageToServer(opcode,message);
                 break;
             }

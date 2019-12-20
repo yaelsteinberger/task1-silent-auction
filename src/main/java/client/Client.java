@@ -19,16 +19,17 @@ public class Client {
 
     private static final int CHAT_CHANNELS_NUM = 2;// Read and Write
     private static Properties props = null;
-    private static User clientIdentityDetails;
+//    private static User clientIdentityDetails;
     private static Map<String, Command> commands;
+    private final static String propFilePath = "clientConfig.properties";
 
 
     public static void main(String[] args) throws IOException {
 
-        ClientProperties.readConfigPropertiesFile();
+        ClientProperties.setPropsFromConfigPropertiesFile(propFilePath);
         props = ClientProperties.getProperties();
 
-        clientIdentityDetails = GenerateUser.generateName(true);
+//        clientIdentityDetails = GenerateUser.generateName(true);
 
         runClient();
     }
@@ -49,7 +50,7 @@ public class Client {
         /* NOTE: to be able to check the Future results independently, cannot
         use invokeAll but Submit*/
         List<Future> results = new ArrayList<Future>(){{
-            add(executor.submit(Executors.callable(new ClientReadChannel(socket,clientIdentityDetails))));
+            add(executor.submit(Executors.callable(new ClientReadChannel(socket))));
 //            add(executor.submit(Executors.callable(new ClientWriteChannel(socket,clientIdentityDetails))));
         }};
 

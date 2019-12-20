@@ -8,6 +8,7 @@ import authenticate.HttpAuthApi;
 import authenticate.HttpStatusCode;
 import authenticate.InvalidUserNames;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -20,17 +21,18 @@ public class UsersList extends AbstractUsersList {
     }
 
     @Override
-    protected int authenticate(User user) {
+    protected Map authenticate(String userName) {
+        Map returnObj = new HashMap();
         int statusCode = StatusCode.SUCCESS;
 
         HttpAuthApi httpAuthApi = new HttpAuthApi();
-        HttpResponse responseObject = httpAuthApi.isUserAuth(user.getUserName());
+        HttpResponse responseObject = httpAuthApi.isUserAuth(userName);
 
         if(responseObject.isError()){
             HttpResponse errorMsg =  responseObject;
-            logger.error(errorMsg.getMessage().replace("User", "User " + user.getFirstName() + " " + user.getLastName()));
+            logger.error(errorMsg.getMessage().replace("User", "User " + userName));
 
-            switch (errorMsg.getStatusCode()){
+            switch (errorMsg.getStatus()){
                 case HttpStatusCode.FORBIDDEN: {
                     statusCode = StatusCode.ACCOUNT_IS_DISABLED;
                     break;
@@ -40,33 +42,36 @@ public class UsersList extends AbstractUsersList {
                     break;
                 }
             }
+        }else{
+            Map userData = (Map) responseObject.getData().get("user");
+            User user = new User(
+                    (String)userData.get("userName"),
+                    (String)userData.get("firstName"),
+                    (String)userData.get("lastName")
+            );
+            returnObj.put("user",user);
         }
 
-        return statusCode;
+        returnObj.put("statusCode",statusCode);
+        return returnObj;
     }
 
     @Override
-    public int loginUser(User user) {
+    public int loginUser(String userName) {
         int statusCode = StatusCode.INVALID_USERNAME;
 
-        User authUser = new User(
-              user.getUserName(),
-              user.getLastName(),
-              user.getLastName()
-        );
-
-        boolean isValidUserName = InvalidUserNames.isUserNameValid(user.getUserName());
+        boolean isValidUserName = InvalidUserNames.isUserNameValid(userName);
 
         if (isValidUserName) {
-            statusCode = authenticate(authUser);
+            Map returnObj = authenticate(userName);
+            statusCode = (int) returnObj.get("statusCode");
 
             if(statusCode == StatusCode.SUCCESS){
-                usersList.put(user.getUserName(), user);
-                logger.debug("Added user {} to list", user.getUserName());
+
+                usersList.put(userName, (User)returnObj.get("user"));
+                logger.debug("Added user {} to list", userName);
             }
-
         }
-
         return statusCode;
     }
 

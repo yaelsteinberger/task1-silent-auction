@@ -57,14 +57,14 @@ public class ChannelServices {
     }
 
     public int handleLoginClient(LoginUserMessage message) throws IOException {
-        User user = (message).getUser();
+        String userName = message.getUserName();
 
-        int statusCode = this.usersList.loginUser(user);
+        int statusCode = this.usersList.loginUser(userName);
 
         if(statusCode == StatusCode.NO_ACCOUNT_EXISTS){
             handleNotExistAccount();
         }else if(statusCode == StatusCode.SUCCESS){
-            this.userId = user.getUserName();
+            this.userId = userName;
             handleSuccessLoginAccount();
         }
 
@@ -75,7 +75,7 @@ public class ChannelServices {
         int statusCode = StatusCode.REGISTRATION_SUCCESSFUL;
 
         if(response.isError()){
-            switch (response.getStatusCode()){
+            switch (response.getStatus()){
                 case HttpStatusCode.FORBIDDEN: {
                     statusCode = StatusCode.ACCOUNT_ALREADY_EXISTS;
 
@@ -109,7 +109,7 @@ public class ChannelServices {
     public String getWelcomeMessage(){
         return "WELCOME TO SILENT AUCTION\n" +
                 "Please login or register if you don't have an account: \n" +
-                "-> To login type \"login\" and press Enter\n" +
+                "-> To login type \"login: [username]\" and press Enter\n" +
                 "-> To register type \"reg\" and press Enter\n" +
                 "To exit type \"exit\" and press Enter";
     }

@@ -5,10 +5,7 @@ import auctionList.AuctionItemsList;
 import authenticate.HttpAuthApi;
 import entity.User;
 import entity.command.Opcodes;
-import entity.command.schemas.AddBidMessage;
-import entity.command.schemas.BaseMessage;
-import entity.command.schemas.GetAuctionItemMessage;
-import entity.command.schemas.LoginUserMessage;
+import entity.command.schemas.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
@@ -55,7 +52,7 @@ public class HandleReadChannel {
 
             case Opcodes.REGISTER_CLIENT:{
                 logger.debug("Handling read command: REGISTER_CLIENT");
-                User user = ((LoginUserMessage)message).getUser();
+                User user = ((RegisterUserMessage)message).getUser();
                 HttpAuthApi httpApi = new HttpAuthApi();
                 statusCode = this.channelServices.handleRegisterActionResult(httpApi.registerUser(user));
                 break;

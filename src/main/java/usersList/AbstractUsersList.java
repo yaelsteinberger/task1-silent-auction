@@ -2,11 +2,11 @@ package usersList;
 
 import entity.User;
 
-public abstract class AbstractUsersList {
+public abstract class AbstractUsersList   {
 
-    protected abstract int authenticate(User user);
+    protected abstract Object authenticate(String userName);
 
-    public abstract int loginUser(User user);
+    public abstract int loginUser(String userName);
 
     public abstract User findByUserName(String userName);
 

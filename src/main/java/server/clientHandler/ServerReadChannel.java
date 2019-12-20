@@ -1,6 +1,5 @@
 package server.clientHandler;
 
-import auctionList.AuctionItem;
 import auctionList.AuctionItemsList;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -9,15 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
 import entity.channels.ReadChannel;
 import entity.command.Command;
-import entity.command.Opcodes;
-import entity.command.schemas.AddBidMessage;
-import entity.command.schemas.LoginUserMessage;
-import entity.command.schemas.MessageToClientMessage;
-import entity.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import authenticate.HttpAuthApi;
-import authenticate.HttpStatusCode;
 import usersList.AbstractUsersList;
 import usersList.StatusCode;
 

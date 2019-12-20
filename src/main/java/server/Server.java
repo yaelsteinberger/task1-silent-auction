@@ -36,7 +36,7 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
 
-        ServerProperties.readConfigPropertiesFile(propFilePath);
+        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
         props = ServerProperties.getProperties();
         userList = new UsersList();
         auctionItemsList = getAuctionItemsList();
