@@ -1,7 +1,6 @@
 package usersList;
 
 import MOCKs.MockAuthServer;
-import MOCKs.MockSocketTarget;
 import MOCKs.MockUsers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import entity.User;
@@ -26,25 +25,19 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 public class UsersListTest {
     static private User[] users;
     private UsersList usersList;
-    private static ServerSocket listener;
-    private static Socket client;
 
 
     @BeforeClass
-    static public void setup() throws InterruptedException, IOException {
+    static public void setup() throws InterruptedException {
 
         //Given
         MockAuthServer.startServer();
         users = MockUsers.getUsers();
-
-        /* run listener */
-//        listener = new ServerSocket(MockTestProperties.getServerPort());
     }
 
     @AfterClass
     static public void tearDown() throws JsonProcessingException {
         MockAuthServer.stopServer();
-//        listener.close();
     }
 
     @Before
@@ -55,16 +48,6 @@ public class UsersListTest {
         MockAuthServer.resetServer();
 
     }
-
-    private void connectToClientSocket() throws IOException {
-        /* run client */
-        MockSocketTarget mockClient = new MockSocketTarget();
-        mockClient.openSocketToSource();
-
-        /* get client socket */
-        client = listener.accept();
-    }
-
 
     @Test
     public void loginUserTest() throws IOException {
@@ -110,7 +93,6 @@ public class UsersListTest {
                                    HttpStatusCode httpStatusCode,
                                    Map expectation) throws IOException {
 
-//        connectToClientSocket();
         MockAuthServer.resetServer();
 
         //Given
@@ -129,8 +111,6 @@ public class UsersListTest {
             /* if there is no "user" (null) need to use "is" in the assert */
             assertThat(userInList, is(expectation.get("user")));
         }
-
-//        client.close();
     }
 
     @Test
@@ -154,7 +134,6 @@ public class UsersListTest {
 
         //Then
         User expectedUser = users[1];
-
 
         assertThat(user, samePropertyValuesAs(expectedUser));
     }

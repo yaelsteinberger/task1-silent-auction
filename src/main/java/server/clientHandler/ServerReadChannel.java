@@ -49,11 +49,6 @@ public class ServerReadChannel implements ReadChannel {
 
         logger.debug("Waiting for command from client...");
         InputStream reader = socket.getInputStream();
-
-//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(reader));
-//        String dataGram = bufferedReader.readLine();
-//        PrintHelper.printPrettyInRed(dataGram);
-
         Command readCommand = mapper.readValue(reader,Command.class);
         logger.debug("Read command from client: {}",readCommand.getOpcode());
 

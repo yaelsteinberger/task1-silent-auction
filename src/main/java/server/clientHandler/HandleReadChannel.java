@@ -78,9 +78,6 @@ public class HandleReadChannel {
             case Opcodes.ADD_BID:{
                 logger.debug("Handling read command: ADD_BID");
                 statusCode = this.channelServices.handleAddBid((AddBidMessage) message);
-
-                Long itemId = ((AddBidMessage) message).getAuctionItemId();
-                handleReadCommand(Opcodes.GET_AUCTION_ITEM,new GetAuctionItemMessage(itemId));
                 break;
             }
 

@@ -1,7 +1,6 @@
 package auctionList;
 
 import MOCKs.MockUsers;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.User;
 import entity.auction.Bidder;
@@ -23,8 +22,6 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 
 public class AuctionItemTest {
     private static AuctionItem auctionItem;
-
-    ObjectMapper mapper = new ObjectMapper();
     private static ArrayList<Bidder> bidders;
     private static User[] users;
 
@@ -32,9 +29,6 @@ public class AuctionItemTest {
             "Item1",
             "Sparkly Item",
             100L, 20L);
-
-
-
 
 
     @BeforeClass
@@ -70,7 +64,7 @@ public class AuctionItemTest {
     }
 
     @Test
-    public void addBidderTest() throws IOException {
+    public void addBidderTest() {
         //Given
         Map expectations = new HashMap<String,Object>(){{
             put("VALID_VALUE",
@@ -101,7 +95,7 @@ public class AuctionItemTest {
     }
 
     @Test
-    public void incrementBumpPriceTest() throws InterruptedException {
+    public void incrementBumpPriceTest() {
         //Given
         bidders.forEach(bidder -> {
             auctionItem.addBidder(bidder.getBidder(),bidder.getBidderValue());

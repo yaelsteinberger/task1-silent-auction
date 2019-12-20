@@ -27,18 +27,14 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 
 public class HttpServicesTest {
     private static HttpAuthApi httpAuthApi;
-    private static ServerSocket listener;
-    private static Socket client;
     private static User user;
 
     @BeforeClass
-    static public void setup() throws InterruptedException, IOException {
+    static public void setup() throws InterruptedException {
 
         //Given
         MockAuthServer.startServer();
 
-        /* run listener */
-//        listener = new ServerSocket(MockTestProperties.getServerPort());
         httpAuthApi = new HttpAuthApi();
         user = new User(
                 "userName",
@@ -49,22 +45,12 @@ public class HttpServicesTest {
     @AfterClass
     public static void tearDown() throws IOException {
         MockAuthServer.stopServer();
-//        listener.close();
     }
 
     @Before
     public void cleanServerCache() {
         /* Before each test clear the cache from any previous responses and expectations */
         MockAuthServer.resetServer();
-    }
-
-    private void connectToClientSocket() throws IOException {
-        /* run client */
-        MockSocketTarget mockClient = new MockSocketTarget();
-        mockClient.openSocketToSource();
-
-        /* get client socket */
-        client = listener.accept();
     }
 
     @Test
@@ -162,7 +148,6 @@ public class HttpServicesTest {
     private void runTestIsAuthUser(User user,
                                    HttpStatusCode httpStatusCode,
                                    HttpResponse expectation) throws IOException {
-//        connectToClientSocket();
         MockAuthServer.resetServer();
 
         //Given
@@ -173,14 +158,12 @@ public class HttpServicesTest {
 
         //Then
         assertThat(response, samePropertyValuesAs(expectation));
-
-//        client.close();
     }
 
     private void runTestRegisterUser(User user,
                                    HttpStatusCode httpStatusCode,
                                    HttpResponse expectation) throws IOException {
-//        connectToClientSocket();
+
         MockAuthServer.resetServer();
 
         //Given
@@ -191,7 +174,5 @@ public class HttpServicesTest {
 
         //Then
         assertThat(response, samePropertyValuesAs(expectation));
-
-//        client.close();
     }
 }
