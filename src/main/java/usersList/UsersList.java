@@ -43,7 +43,7 @@ public class UsersList extends AbstractUsersList {
                 }
             }
         }else{
-            Map userData = (Map) responseObject.getData().get("user");
+            Map userData = (Map) responseObject.getData();
             User user = new User(
                     (String)userData.get("userName"),
                     (String)userData.get("firstName"),
