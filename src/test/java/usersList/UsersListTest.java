@@ -1,8 +1,8 @@
 package usersList;
 
-import MOCKs.MockAuthServer;
-import MOCKs.MockUsers;
+import MOCKs.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import entity.HttpResponse;
 import entity.User;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -11,8 +11,9 @@ import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 import server.ServerProperties;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -25,25 +26,25 @@ import static org.junit.Assert.assertEquals;
 public class UsersListTest {
     static private List<User> users;
     private UsersList usersList;
+    private static ServerSocket listener;
+    private static Socket client;
 
 
     @BeforeClass
-    static public void setup() throws InterruptedException {
-
+    static public void setup() throws InterruptedException, IOException {
 
         //Given
-        String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
-        String mockHost = (String) ServerProperties.getProperties().get("authServer.host");
-        String mockPort = (String) ServerProperties.getProperties().get("authServer.port");
-        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
         users = Arrays.asList(MockUsers.getUsers());
+
+        /* run listener */
+//        listener = new ServerSocket(MockTestProperties.getServerPort());
     }
 
     @AfterClass
     static public void tearDown() throws JsonProcessingException {
         MockAuthServer.stopServer();
+//        listener.close();
     }
 
     @Before
@@ -55,28 +56,18 @@ public class UsersListTest {
 
     }
 
-    @Test
-    public void loginUserSuccessTest() throws IOException {
+    private void connectToClientSocket() throws IOException {
+        /* run client */
+        MockSocketTarget mockClient = new MockSocketTarget();
+        mockClient.openSocketToSource();
 
-        //Given
-        User user = new User(
-                "userName4",
-                "FirstName4",
-                "LastName4");
-
-        //When
-        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
-        int status = usersList.loginUser(user.getUserName());
-        User userInList = usersList.findByUserName(user.getUserName());
-
-        //Then
-        int expectedStatusCode = StatusCode.SUCCESS;
-        assertThat(status, is(expectedStatusCode));
-        assertThat(userInList, samePropertyValuesAs(user));
+        /* get client socket */
+        client = listener.accept();
     }
 
+
     @Test
-    public void loginUserFailAccountDisabledTest() throws IOException {
+    public void loginUserTest() throws IOException {
 
         //Given
         User user = new User(
@@ -84,35 +75,62 @@ public class UsersListTest {
                 "FirstName4",
                 "LastName4");
 
-        //When
-        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.FORBIDDEN_403);
-        int status = usersList.loginUser(user.getUserName());
-        User userInList = usersList.findByUserName(user.getUserName());
+        Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
+            put(HttpStatusCode.OK_200,
+                    new HashMap(){{
+                        put("statusCode",StatusCode.SUCCESS);
+                        put("user",user);
+                    }});
+            put(HttpStatusCode.FORBIDDEN_403,
+                    new HashMap(){{
+                        put("statusCode",StatusCode.ACCOUNT_IS_DISABLED);
+                        put("user",null);
+                    }});
+            put(HttpStatusCode.NOT_FOUND_404,
+                            new HashMap(){{
+                        put("statusCode",StatusCode.NO_ACCOUNT_EXISTS);
+                        put("user",null);
+                    }});
+        }};
 
-        //Then
-        int expectedStatusCode = StatusCode.ACCOUNT_IS_DISABLED;
-        assertThat(status, is(expectedStatusCode));
-        assertThat(userInList, nullValue());
+
+
+        Set<HttpStatusCode> httpStatusCodes = expectations.keySet();
+
+        //When
+        for (HttpStatusCode httpStatusCode : httpStatusCodes) {
+            usersList = new UsersList();
+
+            Map expectation = (Map) expectations.get(httpStatusCode);
+            runTestLoginUser(user,httpStatusCode, expectation);
+        }
     }
 
-    @Test
-    public void loginUserFailAccountNotExistTest() throws IOException {
+    private void runTestLoginUser(User user,
+                                   HttpStatusCode httpStatusCode,
+                                   Map expectation) throws IOException {
+
+//        connectToClientSocket();
+        MockAuthServer.resetServer();
 
         //Given
-        User user = new User(
-                "userName4",
-                "FirstName4",
-                "LastName4");
+        MockAuthServer.isUserAuthExpectations(user, httpStatusCode);
 
         //When
-        MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.NOT_FOUND_404);
         int status = usersList.loginUser(user.getUserName());
         User userInList = usersList.findByUserName(user.getUserName());
 
         //Then
-        int expectedStatusCode = StatusCode.NO_ACCOUNT_EXISTS;
-        assertThat(status, is(expectedStatusCode));
-        assertThat(userInList, nullValue());
+        assertThat(status, is(expectation.get("statusCode")));
+
+        try{
+            assertThat(userInList, samePropertyValuesAs(expectation.get("user")));
+        }catch(NullPointerException e){
+            /* if there is no "user" (null) need to use "is" in the assert */
+            assertThat(userInList, is(expectation.get("user")));
+        }
+
+//        client.close();
     }
 
     @Test
@@ -124,7 +142,7 @@ public class UsersListTest {
         //When
         users.forEach(user -> {
             try {
-                MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);//                mockAuthServer.isUserAuthExpectations(((User)user).getUserName(),HttpStatusCode.OK_200);
+                MockAuthServer.isUserAuthExpectations(user,HttpStatusCode.OK_200);
                 usersList.loginUser(user.getUserName());
                 MockAuthServer.resetServer();
             } catch (IOException e) {
