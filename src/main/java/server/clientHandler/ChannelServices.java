@@ -11,13 +11,12 @@ import entity.User;
 import entity.command.Command;
 import entity.command.Opcodes;
 import entity.command.schemas.AddBidMessage;
-import entity.command.schemas.GetAuctionItemMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -150,7 +149,7 @@ public class ChannelServices {
     public String getWelcomeMessage(){
         return "WELCOME TO SILENT AUCTION\n" +
                 "Please login or register if you don't have an account: \n" +
-                "-> To login type \"login: [username]\" and press Enter\n" +
+                "-> To login type \"login\" and press Enter\n" +
                 "-> To register type \"reg\" and press Enter\n" +
                 "To exit type \"exit\" and press Enter";
     }
@@ -160,10 +159,9 @@ public class ChannelServices {
     }
 
     private String getAuctionInstructions(){
-        return  "-> To display an auction item details type \"item [item id]\" and press Enter\n" +
+        return  "-> To display an auction item details type \"item\" and press Enter\n" +
                 "-> To display auction items list for an item type \"list\" and press Enter\n" +
-                "-> To add a bid type \"bid item:[id] value:[value*]\" and press Enter\n" +
-                "* Invalid value will not be accepted\n" +
+                "-> To add a bid type \"bid\" and press Enter\n" +
                 "To exit you can type \"exit\" and press Enter\n";
     }
 }

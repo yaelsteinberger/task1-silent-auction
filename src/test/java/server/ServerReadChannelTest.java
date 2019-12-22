@@ -4,10 +4,8 @@ import MOCKs.*;
 import auctionList.AuctionItem;
 import auctionList.AuctionItemsList;
 import entity.User;
-import entity.auction.Bidder;
 import entity.command.Command;
 import entity.command.Opcodes;
-import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.RegisterUserMessage;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -15,15 +13,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 import server.clientHandler.ServerReadChannel;
-import usersList.StatusCode;
+import entity.StatusCode;
 import usersList.UsersList;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -271,7 +266,6 @@ public class ServerReadChannelTest {
         assertThat(command.getOpcode(), is(expectation.get("opcodeToClient")));
 
     }
-
 
     private void testReadRegisterCommand(
             Command command,

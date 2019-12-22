@@ -9,7 +9,7 @@ import entity.command.schemas.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.IOException;
 import java.net.Socket;

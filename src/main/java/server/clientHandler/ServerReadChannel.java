@@ -11,7 +11,7 @@ import entity.command.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.*;
 import java.net.Socket;

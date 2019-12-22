@@ -3,6 +3,7 @@ package usersList;
 import MOCKs.MockAuthServer;
 import MOCKs.MockUsers;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import entity.StatusCode;
 import entity.User;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -11,8 +12,6 @@ import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +60,7 @@ public class UsersListTest {
         Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
             put(HttpStatusCode.OK_200,
                     new HashMap(){{
-                        put("statusCode",StatusCode.SUCCESS);
+                        put("statusCode", StatusCode.SUCCESS);
                         put("user",user);
                     }});
             put(HttpStatusCode.FORBIDDEN_403,

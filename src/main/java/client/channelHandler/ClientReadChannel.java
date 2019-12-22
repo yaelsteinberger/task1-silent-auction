@@ -1,15 +1,14 @@
-package client;
+package client.channelHandler;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.channels.ReadChannel;
 import entity.command.Command;
-import entity.command.Opcodes;
 import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.*;
 import java.net.Socket;
@@ -33,11 +32,6 @@ public class ClientReadChannel implements ReadChannel {
     public Command read() throws IOException {
         logger.debug("Waiting for reply from server...");
         InputStream reader = socket.getInputStream();
-
-//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(reader));
-//        String dataGram = bufferedReader.readLine();
-//        PrintHelper.printPrettyInRed(dataGram);
-
         Command readCommand = mapper.readValue(reader,Command.class);
         logger.debug("Read reply from server: {}",readCommand.getOpcode());
 
@@ -46,41 +40,23 @@ public class ClientReadChannel implements ReadChannel {
 
     @Override
     public int handleRead(Command command) throws IOException {
-        int statusCode = StatusCode.FATAL_ERROR;
         logger.debug("Handling read command: {}",command.getOpcode());
 
-        /* Display message to client */
+        int statusCode = StatusCode.FATAL_ERROR;
         int opcode = command.getOpcode();
         String message = ((MessageToClientMessage)command.getMessage()).getMessage();
+
+        /* Display message to client */
         displayMessageToClient(message);
 
-        /* handle message */
         try {
-            switch(opcode){
+            /* handle client input */
+            statusCode = this.channelReadServices.handleUserRequest();
 
-                case Opcodes.WELCOME:{
-                    statusCode = this.channelReadServices.handleWelcomeMessage();
-                    break;
-                }
-
-                case Opcodes.REGISTER_CLIENT:{
-                    statusCode = this.channelReadServices.handleRegisterClientMessage();
-                    break;
-                }
-
-                case Opcodes.LOGIN_SUCCESS:
-                case Opcodes.AUCTION_ITEM:
-                case Opcodes.AUCTION_LIST:{
-                    statusCode = this.channelReadServices.handleUserRequest();
-                    break;
-                }
-
-
-            }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+//            e.printStackTrace();
         }
-
         return statusCode;
     }
 
@@ -106,7 +82,6 @@ public class ClientReadChannel implements ReadChannel {
             catch (IOException e) {logger.error("{}", e.getMessage());}
         }
     }
-
 
     private void displayMessageToClient(String message){
         System.err.println(message);

@@ -1,5 +1,6 @@
 package usersList;
 
+import entity.StatusCode;
 import entity.User;
 import entity.HttpResponse;
 import org.slf4j.Logger;
