@@ -13,6 +13,7 @@ public interface StatusCode {
     int IN_PROCESS_ASK = 10;
     int IN_PROCESS_ANSWER = 11;
     int END_PROCESS = 12;
-    int TERMINATE_SESSION = 13;
-    int FATAL_ERROR = 14;
+    int EXIT_PROCESS = 13;
+    int TERMINATE_SESSION = 14;
+    int FATAL_ERROR = 15;
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import entity.User;
 import entity.command.Command;
 import entity.command.Opcodes;
 import entity.command.schemas.*;
@@ -47,7 +48,7 @@ public class ChannelReadServices {
         int statusCode = StatusCode.SUCCESS;
 
         BaseMessage message = convertResultObjectToMessageObject(
-                (Integer)result.get("opcode"),
+                opcode,
                 (Map)result.get("data"));
 
         if(opcode != Opcodes.EXIT ) {
@@ -71,7 +72,7 @@ public class ChannelReadServices {
         Map data = new HashMap();
         Map userRequest = new HashMap(){{
             put("opcode",Opcodes.EXIT);
-            put("message",new EmptyMessage());
+            put("data",new EmptyMessage());
         }};
 
         Integer statusCode = StatusCode.MENU;
@@ -136,10 +137,12 @@ public class ChannelReadServices {
                 case StatusCode.END_PROCESS:{
                     userRequest.put("opcode",result.opcode());
                     userRequest.put("data",data);
+                    statusCode = StatusCode.EXIT_PROCESS;
+                    break;
                 }
 
             }
-            isRun = !((result.opcode() == Opcodes.EXIT) || (statusCode == StatusCode.END_PROCESS));
+            isRun = !((result.opcode() == Opcodes.EXIT) || (statusCode == StatusCode.EXIT_PROCESS));
         }
 
         return userRequest;
@@ -156,11 +159,13 @@ public class ChannelReadServices {
                 break;
             }
             case Opcodes.REGISTER_CLIENT:{
-                data.put("type", "RegisterUserMessage");
-                message = mapper.convertValue(data, RegisterUserMessage.class);
+                Map tempData = new HashMap();
+                tempData.put("user",mapper.convertValue(data, User.class));
+                tempData.put("type", "RegisterUserMessage");
+                message = mapper.convertValue(tempData, RegisterUserMessage.class);
                 break;
             }
-            case Opcodes.AUCTION_ITEM:{
+            case Opcodes.GET_AUCTION_ITEM:{
                 data.put("type","GetAuctionItemMessage");
                 message = mapper.convertValue(data, GetAuctionItemMessage.class);
                 break;

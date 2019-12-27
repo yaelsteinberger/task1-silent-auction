@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Properties;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
@@ -32,6 +33,7 @@ public class Server {
     private final static String propFilePath = "serverConfig.properties";
 
     private static ExecutorService threadsClientsPool = Executors.newFixedThreadPool(THREADS_NUM);
+    private static ExecutorService threadTimer = Executors.newFixedThreadPool(1);
 
 
     public static void main(String[] args) throws IOException {
@@ -45,6 +47,13 @@ public class Server {
     }
 
     private static void runServer() throws IOException {
+
+        /* start auction time counter */
+        // Lets assume 2 hours
+//        Timer timer = new Timer("MyTimer");
+//        timer.scheduleAtFixedRate(new AuctionTimer(), 30, 3000);
+//        threadsClientsPool.execute(new AuctionTimer(2L));
+
 
         /* establish connection with port */
         ServerSocket listener = new ServerSocket(Integer.parseInt((String)(props.get("server.port"))));

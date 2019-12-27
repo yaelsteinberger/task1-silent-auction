@@ -8,12 +8,12 @@ import java.util.List;
 public enum OpcodeCommandsQuestions {
     NONE(Opcodes.NONE,"", null),
     EXIT(Opcodes.EXIT,"exit",null),
-    AUCTION_LIST(Opcodes.AUCTION_LIST,"list", null),
+    GET_AUCTION_LIST(Opcodes.GET_AUCTION_LIST,"list", null),
     LOGIN(Opcodes.LOGIN_CLIENT,"login",
             new ArrayList<Question>(){{
                 add(new Question("Please enter your user name:", "userName", String.class));
             }}),
-    AUCTION_ITEM(Opcodes.AUCTION_ITEM,"item",
+    GET_AUCTION_ITEM(Opcodes.GET_AUCTION_ITEM,"item",
             new ArrayList<Question>(){{
                 add(new Question("Please enter item id:", "itemId", Long.class));
             }}),

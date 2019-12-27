@@ -21,8 +21,6 @@ public class ParseUserInputDataTest {
     @BeforeClass
     public static void setup() throws IOException, InterruptedException {
 
-
-
     }
 
     @Test
@@ -58,9 +56,9 @@ public class ParseUserInputDataTest {
             put(" logina ",OpcodeCommandsQuestions.NONE);
             put(" reg ",OpcodeCommandsQuestions.REGISTER);
             put(" register ",OpcodeCommandsQuestions.NONE);
-            put(" list ",OpcodeCommandsQuestions.AUCTION_LIST);
+            put(" list ",OpcodeCommandsQuestions.GET_AUCTION_LIST);
             put(" list: ",OpcodeCommandsQuestions.NONE);
-            put(" item ",OpcodeCommandsQuestions.AUCTION_ITEM);
+            put(" item ",OpcodeCommandsQuestions.GET_AUCTION_ITEM);
             put(" item: ",OpcodeCommandsQuestions.NONE);
             put(" bid ",OpcodeCommandsQuestions.ADD_BID);
             put(" bid itemId 6 value 7",OpcodeCommandsQuestions.NONE);

@@ -79,8 +79,6 @@ public class ServerReadChannel implements ReadChannel {
 
                 isRun = ((statusCode != StatusCode.FATAL_ERROR) ||
                         (statusCode != StatusCode.TERMINATE_SESSION));
-
-                logger.debug("IsRun = {}", isRun);
             }
         }catch(IOException e){
             logger.error("{}", e.getMessage());

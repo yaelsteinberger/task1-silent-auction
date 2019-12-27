@@ -132,7 +132,7 @@ public class ChannelServices {
         if(auctionItem.addBidder(user,addBid.getBidValue())){
             /* send updated bidders list to client */
             opcode = Opcodes.AUCTION_ITEM;
-            messageToClient = this.auctionItemsList.itemsListToPrettyString();
+            messageToClient = this.auctionItemsList.findById(addBid.getAuctionItemId()).toPrettyString();
             statusCode = StatusCode.SUCCESS;
         }else{
             opcode = Opcodes.ACTION_FAILED;
