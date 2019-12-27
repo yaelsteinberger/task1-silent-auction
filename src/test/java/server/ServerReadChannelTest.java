@@ -4,8 +4,8 @@ import MOCKs.*;
 import auctionList.AuctionItem;
 import auctionList.AuctionItemsList;
 import entity.User;
-import entity.auction.Bidder;
 import entity.command.Command;
+import entity.command.Opcodes;
 import entity.command.schemas.RegisterUserMessage;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -13,15 +13,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockserver.model.HttpStatusCode;
 import server.clientHandler.ServerReadChannel;
-import usersList.StatusCode;
+import entity.StatusCode;
 import usersList.UsersList;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -33,65 +30,95 @@ public class ServerReadChannelTest {
     private static User[] users;
     private static AuctionItemsList auctionItemsList;
     private static ServerReadChannel serverReadChannel;
-    private static Socket client;
-    private static Properties props;
-    private static ServerSocket listener;
-
+    private static MockSocket mockClientSocket;
 
 
     @BeforeClass
-    public static void setup() throws IOException, InterruptedException {
+    public static void setup() throws InterruptedException {
 
         //Given
-        String propFilePath = "src\\test\\resources\\mockConfig.properties";
-        ServerProperties.setPropsFromConfigPropertiesFile(propFilePath);
-        props = ServerProperties.getProperties();
-        String mockHost = (String) props.get("authServer.host");
-        String mockPort = (String) props.get("authServer.port");
-        MockAuthServer.setAttributes(mockHost,Integer.parseInt(mockPort));
         MockAuthServer.startServer();
 
         auctionItemsList = MockAuctionItems.generateAuctionItemsList();
         users = MockUsers.getUsers();
 
-        /* run listener */
-        listener = new ServerSocket(Integer.parseInt((String)(props.get("server.port"))));
-
+        mockClientSocket = new MockSocket();
     }
 
     @AfterClass
     public static void tearDown() throws IOException {
         MockAuthServer.stopServer();
-        listener.close();
     }
 
     @Before
-    public void cleanServerCache() {
+    public void cleanServerCache() throws IOException {
         usersList = new UsersList();
 
         /* Before each test clear the cache from any previous responses and expectations */
         MockAuthServer.resetServer();
+        connectToClientMockSocket();
+    }
+
+    private void connectToClientMockSocket() throws IOException {
+        serverReadChannel = new ServerReadChannel(mockClientSocket,usersList,auctionItemsList);
+    }
+
+    private void generateBiddersListInAuctionItem(Long itemId){
+        AuctionItem auctionItem = auctionItemsList.findById(itemId);
+        auctionItem.addBidder(users[0],4150L);
+        auctionItem.addBidder(users[2],4300L);
+        auctionItem.addBidder(users[1],4450L);
+    }
+
+
+    @Test
+    public void testConnectedCommand() throws IOException {
+
+        //Given
+        Command command = MockCommands.getMockConnectedCommand();
+
+        //When
+        int status = serverReadChannel.handleRead(command);
+
+        //Then
+        int expectedStatus = StatusCode.SUCCESS;
+        assertThat(status, is(expectedStatus));
     }
 
     @Test
     public void handleReadLoginCommandTest() throws IOException {
         //Given
         Command command = MockCommands.getMockLoginCommand(users[0]);
+        Command commandInvalidUserName = MockCommands.getMockLoginCommand(
+                new User("admini", "FirstName", "LastName"));
         Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
-            put(HttpStatusCode.OK_200, new HashMap<String,Integer>(){{
+            put(HttpStatusCode.OK_200, new HashMap<String,Object>(){{
+                put("command",command);
                 put("sizeBefore",0);
                 put("sizeAfter",1);
                 put("status",StatusCode.SUCCESS);
+                put("opcodeToClient",Opcodes.LOGIN_SUCCESS);
             }});
-            put(HttpStatusCode.FORBIDDEN_403, new HashMap<String,Integer>(){{
+            put(HttpStatusCode.FORBIDDEN_403, new HashMap<String,Object>(){{
+                put("command",command);
                 put("sizeBefore",0);
                 put("sizeAfter",0);
                 put("status",StatusCode.ACCOUNT_IS_DISABLED);
+                put("opcodeToClient",Opcodes.ACTION_FAILED);
             }});
-            put(HttpStatusCode.NOT_FOUND_404, new HashMap<String,Integer>(){{
+            put(HttpStatusCode.NOT_FOUND_404, new HashMap<String,Object>(){{
+                put("command",command);
                 put("sizeBefore",0);
                 put("sizeAfter",0);
                 put("status",StatusCode.NO_ACCOUNT_EXISTS);
+                put("opcodeToClient",Opcodes.REGISTER_CLIENT);
+            }});
+            put(HttpStatusCode.OK_200, new HashMap<String,Object>(){{
+                put("command",commandInvalidUserName);
+                put("sizeBefore",0);
+                put("sizeAfter",0);
+                put("status",StatusCode.INVALID_USERNAME);
+                put("opcodeToClient",Opcodes.LOGIN_CLIENT);
             }});
         }};
 
@@ -99,10 +126,14 @@ public class ServerReadChannelTest {
 
         //When
         for (HttpStatusCode httpStatusCode : httpStatusCodes) {
+
+            /* restart usersList so MockSocket will connect with an empty one */
             usersList = new UsersList();
+            connectToClientMockSocket();
+            MockAuthServer.resetServer();
 
             Map expectation = (Map)expectations.get(httpStatusCode);
-            runTestReadLoginCommand(command,httpStatusCode,expectation);
+            runTestReadLoginCommand(users[0], httpStatusCode,expectation);
         }
     }
 
@@ -111,121 +142,169 @@ public class ServerReadChannelTest {
     public void handleReadRegisterCommandTest() throws IOException {
         //Given
         Command command = MockCommands.getMockRegisterCommand(users[0]);
-        Map<HttpStatusCode,Integer> expectations = new HashMap<>(){{
-            put(HttpStatusCode.OK_200, StatusCode.REGISTRATION_SUCCESSFUL);
-            put(HttpStatusCode.FORBIDDEN_403, StatusCode.ACCOUNT_ALREADY_EXISTS);
+        Map<HttpStatusCode,Object> expectations = new HashMap<>(){{
+            put(HttpStatusCode.OK_200,
+                    new HashMap(){{
+                        put("status",StatusCode.REGISTRATION_SUCCESSFUL);
+                        put("opcodeToClient",Opcodes.WELCOME);
+                    }});
+            put(HttpStatusCode.FORBIDDEN_403,
+                    new HashMap(){{
+                        put("status",StatusCode.ACCOUNT_ALREADY_EXISTS);
+                        put("opcodeToClient",Opcodes.ACTION_FAILED);
+                    }});
         }};
 
-        Set<HttpStatusCode> httpStatusCodes = expectations.keySet();
+        Set<HttpStatusCode> keys = expectations.keySet();
 
         //When
-        for (HttpStatusCode httpStatusCode : httpStatusCodes) {
-            Integer expectedStatus = expectations.get(httpStatusCode);
-            testReadRegisterCommand(command,httpStatusCode,expectedStatus);
+        for (HttpStatusCode key : keys) {
+            connectToClientMockSocket();
+            MockAuthServer.resetServer();
+
+            Map expectation = (Map) expectations.get(key);
+            testReadRegisterCommand(command,key,expectation);
         }
+    }
+
+    @Test
+    public void handleGetAuctionItemsListTest() throws IOException {
+
+        //Given
+        Command command = MockCommands.getMockGetAuctionListCommand();
+
+        // When
+        serverReadChannel.handleRead(command);
+        Command commandToClient = mockClientSocket.getOutPutStreamCommand();
+
+        // Then
+        int expectedOpcode = Opcodes.AUCTION_LIST;
+        assertThat(commandToClient.getOpcode(), is(expectedOpcode));
+    }
+
+    @Test
+    public void handleGetAuctionItemTest() throws IOException {
+
+        //Given
+        Long itemId = 2L;
+        Command command = MockCommands.getMockGetAuctionItemCommand(itemId);
+
+        // When
+        serverReadChannel.handleRead(command);
+        Command commandToClient = mockClientSocket.getOutPutStreamCommand();
+
+        // Then
+        int expectedOpcode = Opcodes.AUCTION_ITEM;
+        assertThat(commandToClient.getOpcode(), is(expectedOpcode));
     }
 
     @Test
     public void handleReadAddBidCommandTest() throws IOException {
 
-        connectToClientSocket();
-        MockAuthServer.resetServer();
-
         //Given
         /* first "connect" user to channel by logging in */
+        MockAuthServer.resetServer();
+
         Command command = MockCommands.getMockLoginCommand(users[0]);
         HttpStatusCode httpStatusCode = HttpStatusCode.OK_200;
-        MockAuthServer.isUserAuthExpectations(((RegisterUserMessage)command.getMessage()).getUser(), httpStatusCode);
+        MockAuthServer.isUserAuthExpectations(users[0], httpStatusCode);
         serverReadChannel.handleRead(command);
 
-        /* add few bidders to an acutionItem */
-        Long id = 2L;
-        Long bidValue = 4600L;
-        AuctionItem auctionItem = auctionItemsList.findById(id);
-        auctionItem.addBidder(users[0],4150L);
-        auctionItem.addBidder(users[2],4300L);
-        auctionItem.addBidder(users[1],4450L);
+        Map expectations = new HashMap(){{
+            put("SUCCESS",
+                    new HashMap(){{
+                        put("bidValue",4600L);
+                        put("statusCode",StatusCode.SUCCESS);
+                        put("incrementListSize",1);
+                        put("opcodeToClient",Opcodes.AUCTION_ITEM);
+                    }});
+            put("INVALID_BELOW_MAX",
+                    new HashMap(){{
+                        put("bidValue",4300L);
+                        put("statusCode",StatusCode.INVALID_VALUE);
+                        put("incrementListSize",0);
+                        put("opcodeToClient",Opcodes.ACTION_FAILED);;
+                    }});
+            put("INVALID_NOT_FOLLOW_INCREMENT",
+                    new HashMap(){{
+                        put("bidValue",4700L);
+                        put("statusCode",StatusCode.INVALID_VALUE);
+                        put("incrementListSize",0);
+                        put("opcodeToClient",Opcodes.ACTION_FAILED);;
+                    }});
+        }};
 
-        //When - Success
-        command = MockCommands.getMockAddBidCommand(id, bidValue);//Ring item
-        int successStatus = serverReadChannel.handleRead(command);
-        Bidder bidderSuccess = auctionItemsList.findById(id).getBiddersList().peekLast();
-
-        //When - Fail
-        Long newValue = 4750L;
-        auctionItem.addBidder(users[1],newValue);
-        command = MockCommands.getMockAddBidCommand(id, bidValue);//Ring item
-        int failStatus = serverReadChannel.handleRead(command);
-        Bidder bidderFail = auctionItemsList.findById(id).getBiddersList().peekLast();
-
-        //Then
-        int expectedSuccessStatus = StatusCode.SUCCESS;
-        int expectedFailStatus = StatusCode.INVALID_VALUE;
-        assertThat(successStatus, is(expectedSuccessStatus));
-        assertThat(bidderSuccess.getBidder(), is(users[0]));
-        assertThat(bidderSuccess.getBidderValue(), is(bidValue));
-        assertThat(failStatus, is(expectedFailStatus));
-        assertThat(bidderFail.getBidder(), is(users[1]));
-        assertThat(bidderFail.getBidderValue(), is(newValue));
-
-        client.close();
-    }
-
-    private void connectToClientSocket() throws IOException {
-        /* run client */
-        MockSocketTarget mockClient = new MockSocketTarget();
-        mockClient.openSocketToSource();
-
-        /* get client socket */
-        client = listener.accept();
-
-        /* create new readChannel */
-        serverReadChannel = new ServerReadChannel(client,usersList,auctionItemsList);
+        Long itemId = 2L;
+        Set<String> keys = expectations.keySet();
+        for (String key : keys) {
+            generateBiddersListInAuctionItem(itemId);
+            runTestReadAddBidCommand(itemId,(Map) expectations.get(key));
+        }
     }
 
     private void runTestReadLoginCommand(
-            Command command,
+            User user,
             HttpStatusCode httpStatusCode,
             Map expectation) throws IOException {
 
-        connectToClientSocket();
-        MockAuthServer.resetServer();
-
         //Given
         int sizeBefore = usersList.getUsersList().size();
-        MockAuthServer.isUserAuthExpectations(((RegisterUserMessage)command.getMessage()).getUser(), httpStatusCode);
+
+        /* doesn't matter what the user is */
+        MockAuthServer.isUserAuthExpectations(user, httpStatusCode);
 
         //When
-        int status = serverReadChannel.handleRead(command);
+        int status = serverReadChannel.handleRead((Command) expectation.get("command"));
         int sizeAfter = usersList.getUsersList().size();
+        /* check what was sent to client through socket */
+        Command command = mockClientSocket.getOutPutStreamCommand();
 
         //Then
         assertThat(status, is(expectation.get("status")));
         assertThat(sizeBefore, is(expectation.get("sizeBefore")));
         assertThat(sizeAfter, is(expectation.get("sizeAfter")));
+        assertThat(command.getOpcode(), is(expectation.get("opcodeToClient")));
 
-        client.close();
     }
-
 
     private void testReadRegisterCommand(
             Command command,
             HttpStatusCode httpStatusCode,
-            Integer expectedStatus) throws IOException {
-
-        connectToClientSocket();
-        MockAuthServer.resetServer();
+            Map expectation) throws IOException {
 
         //Given
         MockAuthServer.registerAuthExpectations(((RegisterUserMessage)command.getMessage()).getUser(), httpStatusCode);
 
         //When
         int status = serverReadChannel.handleRead(command);
+        /* check what was sent to client through socket */
+        Command commandToClient = mockClientSocket.getOutPutStreamCommand();
 
         //Then
-        assertThat(status, is(expectedStatus));
+        assertThat(status, is(expectation.get("status")));
+        assertThat(commandToClient.getOpcode(), is(expectation.get("opcodeToClient")));
+    }
 
-        client.close();
+    private void runTestReadAddBidCommand(Long itemId, Map expectations) throws IOException {
+
+        /* reset bidders list in auctionItem */
+        generateBiddersListInAuctionItem(itemId);
+
+        // When
+        int sizeBefore = auctionItemsList.findById(itemId).getBiddersList().size();
+
+        Command command = MockCommands.getMockAddBidCommand(itemId, (Long) expectations.get("bidValue"));
+        int statusCode = serverReadChannel.handleRead(command);
+        int sizeAfter = auctionItemsList.findById(itemId).getBiddersList().size();
+        /* check what was sent to client through socket */
+        Command commandToClient = mockClientSocket.getOutPutStreamCommand();
+
+        // Then
+        int expectedSize = sizeBefore + (Integer)expectations.get("incrementListSize");
+
+        assertThat(statusCode, is((Integer)expectations.get("statusCode")));
+        assertThat(sizeAfter, is(expectedSize));
+        assertThat(commandToClient.getOpcode(), is(expectations.get("opcodeToClient")));
     }
 }
 

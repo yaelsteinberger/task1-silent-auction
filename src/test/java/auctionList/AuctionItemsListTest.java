@@ -21,7 +21,7 @@ public class AuctionItemsListTest {
     }
 
     @Test
-    public void getAuctionItemsListTest() throws IOException {
+    public void getAuctionItemsListTest() {
 
         // When
         Map list = auctionItemsList.getAuctionItemsList();
@@ -32,7 +32,7 @@ public class AuctionItemsListTest {
     }
 
     @Test
-    public void findAuctionItemByIdTest() throws IOException {
+    public void findAuctionItemByIdTest() {
         //Given
         Long id = 2L;
 

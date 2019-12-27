@@ -9,7 +9,7 @@ import entity.command.schemas.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -78,9 +78,6 @@ public class HandleReadChannel {
             case Opcodes.ADD_BID:{
                 logger.debug("Handling read command: ADD_BID");
                 statusCode = this.channelServices.handleAddBid((AddBidMessage) message);
-
-                Long itemId = ((AddBidMessage) message).getAuctionItemId();
-                handleReadCommand(Opcodes.GET_AUCTION_ITEM,new GetAuctionItemMessage(itemId));
                 break;
             }
 

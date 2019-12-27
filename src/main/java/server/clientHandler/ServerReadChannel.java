@@ -11,7 +11,7 @@ import entity.command.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
-import usersList.StatusCode;
+import entity.StatusCode;
 
 import java.io.*;
 import java.net.Socket;
@@ -49,11 +49,6 @@ public class ServerReadChannel implements ReadChannel {
 
         logger.debug("Waiting for command from client...");
         InputStream reader = socket.getInputStream();
-
-//        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(reader));
-//        String dataGram = bufferedReader.readLine();
-//        PrintHelper.printPrettyInRed(dataGram);
-
         Command readCommand = mapper.readValue(reader,Command.class);
         logger.debug("Read command from client: {}",readCommand.getOpcode());
 
@@ -84,8 +79,6 @@ public class ServerReadChannel implements ReadChannel {
 
                 isRun = ((statusCode != StatusCode.FATAL_ERROR) ||
                         (statusCode != StatusCode.TERMINATE_SESSION));
-
-                logger.debug("IsRun = {}", isRun);
             }
         }catch(IOException e){
             logger.error("{}", e.getMessage());
