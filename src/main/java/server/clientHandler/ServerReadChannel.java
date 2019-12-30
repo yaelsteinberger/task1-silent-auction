@@ -60,8 +60,6 @@ public class ServerReadChannel implements ReadChannel {
         int statusCode = StatusCode.FATAL_ERROR;
 
         if(readCommand != null){
-            int opcode = readCommand.getOpcode();
-
             statusCode = handleReadChannel.handleReadCommand(
                     readCommand.getOpcode(),readCommand.getMessage());
         }

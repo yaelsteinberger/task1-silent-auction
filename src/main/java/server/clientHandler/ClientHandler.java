@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 public class ClientHandler implements Runnable {
     private final static Logger logger = LoggerFactory.getLogger(ClientHandler.class);
 
-    private static final int CHANNELS_NUM = 2; // Read, Write
+    private static final int CHANNELS_NUM = 2; // Read
     private final Socket socket;
     private final AbstractUsersList usersList;
     private final AuctionItemsList auctionItemsList;

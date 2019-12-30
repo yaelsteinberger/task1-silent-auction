@@ -1,6 +1,6 @@
 package client;
-import client.channelHandler.ChannelReadServices;
 import client.channelHandler.ClientReadChannel;
+import client.channelHandler.ClientWriteChannel;
 import entity.command.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -37,6 +38,7 @@ public class Client {
         /* create two thread to be able simultaneously read and write to server */
         ExecutorService executor = Executors.newFixedThreadPool(CHAT_CHANNELS_NUM);
 
+
         /* establish a connection with the server */
         Socket socket = new Socket(
                 (String)props.get("host.name"),
@@ -49,7 +51,7 @@ public class Client {
         use invokeAll but Submit*/
         List<Future> results = new ArrayList<Future>(){{
             add(executor.submit(Executors.callable(new ClientReadChannel(socket))));
-//            add(executor.submit(Executors.callable(new ClientWriteChannel(socket,clientIdentityDetails))));
+            add(executor.submit(Executors.callable(new ClientWriteChannel(socket))));
         }};
 
         boolean areAllTasksRunning = true;

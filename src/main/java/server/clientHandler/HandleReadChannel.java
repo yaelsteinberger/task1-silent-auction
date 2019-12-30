@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
 import entity.StatusCode;
+import util.PrintHelper;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -77,7 +78,8 @@ public class HandleReadChannel {
 
             case Opcodes.ADD_BID:{
                 logger.debug("Handling read command: ADD_BID");
-                statusCode = this.channelServices.handleAddBid((AddBidMessage) message);
+                PrintHelper.printPrettyInRed(message);
+                statusCode = StatusCode.SUCCESS;//this.channelServices.handleAddBid((AddBidMessage) message);
                 break;
             }
 

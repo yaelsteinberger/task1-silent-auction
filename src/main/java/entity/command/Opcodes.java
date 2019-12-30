@@ -19,5 +19,6 @@ public interface Opcodes {
     int GET_AUCTION_ITEM = 104;
     int GET_AUCTION_LIST = 105;
     int ADD_BID = 106;
-    int EXIT = 107;
+    int START_AUCTION = 107;
+    int EXIT = 108;
 }

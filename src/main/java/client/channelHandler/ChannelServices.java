@@ -1,4 +1,5 @@
 package client.channelHandler;
+import activemq.Producer;
 import client.entity.OpcodeCommandsQuestions;
 import client.entity.Question;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -16,22 +17,26 @@ import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-public class ChannelReadServices {
-    private final static Logger logger = LoggerFactory.getLogger(ChannelReadServices.class);
+public class ChannelServices {
+    private final static Logger logger = LoggerFactory.getLogger(ChannelServices.class);
 
+    private final Executor activemqExecutor;
     private final Socket socket;
     private ObjectMapper mapper;
 
     /* Create stream to read from keyboard */
     private BufferedReader kbd;
 
-    public ChannelReadServices(Socket socket) {
+    public ChannelServices(Socket socket) {
         this.socket = socket;
         this.mapper = new ObjectMapper();
         this.kbd = new BufferedReader(new InputStreamReader(System.in));
         this.mapper.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         this.mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+        this.activemqExecutor = Executors.newFixedThreadPool(1);
     }
 
     public void handleClientConnectionEvent() throws IOException {
@@ -51,7 +56,8 @@ public class ChannelReadServices {
                 opcode,
                 (Map)result.get("data"));
 
-        if(opcode != Opcodes.EXIT ) {
+
+        if(opcode != Opcodes.EXIT) {
             sendMessageToServer(opcode, message);
         }
         else{
@@ -64,8 +70,13 @@ public class ChannelReadServices {
     private void sendMessageToServer(int opcode, BaseMessage message) throws IOException {
         logger.debug("Send message opcode {} to Server",opcode);
         Command writeCommand = new Command(opcode,message);
-        OutputStream writer = socket.getOutputStream();
-        this.mapper.writeValue(writer,writeCommand);
+
+        if(opcode == Opcodes.ADD_BID){
+            this.activemqExecutor.execute(new Producer(writeCommand));
+        }else{
+            OutputStream writer = socket.getOutputStream();
+            this.mapper.writeValue(writer,writeCommand);
+        }
     }
 
     private Map getUserRequest() throws IOException, InterruptedException {
