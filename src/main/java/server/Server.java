@@ -27,10 +27,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.stream.Stream;
 
 /*
@@ -71,7 +68,8 @@ public class Server {
         /* establish connection with port */
         ServerSocket listener = new ServerSocket(Integer.parseInt((String)(props.get("server.port"))));
 
-        adminThread.execute(new ServerReadActiveMq(null,userList,auctionItemsList));
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
+        adminThread.execute(new ServerActiveMqConsumer(null,userList,auctionItemsList,cyclicBarrier));
         auctionTimer = new AuctionTimer(TIME, TIME_UNIT);
 
         try{
