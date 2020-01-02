@@ -33,8 +33,6 @@ public class ServerReadChannel implements ReadChannel {
             AuctionItemsList auctionItemsList
     ){
 
-
-
         this.socket = socket;
         this.usersList = usersList;
         this.mapper = new ObjectMapper();

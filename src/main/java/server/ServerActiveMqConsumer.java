@@ -7,11 +7,15 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.StatusCode;
+import entity.User;
 import entity.command.Command;
+import entity.command.Opcodes;
+import entity.command.schemas.AddBidMessage;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.clientHandler.ChannelServices;
 import server.clientHandler.HandleReadChannel;
 import usersList.AbstractUsersList;
 import util.PrintHelper;
@@ -43,7 +47,7 @@ public class ServerActiveMqConsumer implements Runnable {
     private final ActiveMQConnectionFactory connectionFactory;
     private final HandleReadQueueMessages handleReadQueueMessages;
     private final CyclicBarrier cyclicBarrier;
-    
+
     public ServerActiveMqConsumer(
             Socket socket,
             AbstractUsersList usersList,
@@ -84,9 +88,8 @@ public class ServerActiveMqConsumer implements Runnable {
 
             connection.start();
 
+            /* the best solution to hold the thread instead of Thread.sleep() */
             cyclicBarrier.await();
-
-            //Thread.sleep(100000);
 
         } catch (JMSException | InterruptedException | BrokenBarrierException e) {
             e.printStackTrace();
@@ -114,6 +117,7 @@ class HandleReadQueueMessages implements MessageListener {
     private final static Logger logger = LoggerFactory.getLogger(HandleReadQueueMessages.class);
     private final AuctionItemsList auctionItemsList;
     private final AbstractUsersList usersList;
+    //private final ChannelServices channelServices;
 
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -132,13 +136,20 @@ class HandleReadQueueMessages implements MessageListener {
                 handleCommand(command);
             }
 
-        } catch (JsonProcessingException | JMSException e) {
+        } catch (JMSException | IOException e) {
             e.printStackTrace();
         }
     }
 
-    public int handleCommand(Command command) throws JsonProcessingException {
+    public int handleCommand(Command command) throws IOException {
         PrintHelper.printPrettyInRed(command);
+
+        if(command.getOpcode() == Opcodes.ADD_BID){
+            AddBidMessage message = mapper.convertValue(command.getMessage(),AddBidMessage.class);
+            Socket socket = usersList.findByUserName(message.getUserId()).getSocket();
+            ChannelServices channelServices = new ChannelServices(socket,usersList,auctionItemsList);
+            channelServices.handleAddBid(message);
+        }
 
         return StatusCode.SUCCESS;
     }

@@ -1,10 +1,12 @@
 package client.channelHandler;
 
+import client.entity.ClientId;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.channels.ReadChannel;
 import entity.command.Command;
+import entity.command.Opcodes;
 import entity.command.schemas.MessageToClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +50,15 @@ public class ClientReadChannel implements ReadChannel {
 
         int statusCode = StatusCode.FATAL_ERROR;
         int opcode = command.getOpcode();
-        String message = ((MessageToClientMessage)command.getMessage()).getMessage();
+        MessageToClientMessage message = (MessageToClientMessage)command.getMessage();
+        //String message = ((MessageToClientMessage)command.getMessage()).getMessage();
 
         /* Display message to client */
-        displayMessageToClient(message);
+        displayMessageToClient(message.getMessage());
 
+        if(opcode == Opcodes.LOGIN_SUCCESS){
+            ClientId.setClientId((String)message.getData());
+        }
         return StatusCode.SUCCESS;
     }
 

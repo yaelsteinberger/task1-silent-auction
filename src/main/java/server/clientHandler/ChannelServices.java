@@ -13,10 +13,12 @@ import entity.command.Opcodes;
 import entity.command.schemas.AddBidMessage;
 import entity.command.schemas.LoginUserMessage;
 import entity.command.schemas.MessageToClientMessage;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import usersList.AbstractUsersList;
 import entity.StatusCode;
+import usersList.UserInList;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,6 +45,17 @@ public class ChannelServices {
         this.mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
     }
 
+    public int sendMessageToClient(int opcode, String message, Object data) throws IOException {
+        logger.debug("Send message opcode {} to Client",opcode);
+
+        MessageToClientMessage messageToClient = new MessageToClientMessage(message, data);
+        Command writeCommand = new Command(opcode, messageToClient);
+
+        OutputStream writer = socket.getOutputStream();
+        this.mapper.writeValue(writer,writeCommand);
+
+        return StatusCode.SUCCESS;
+    }
 
     public int sendMessageToClient(int opcode, String message) throws IOException {
         logger.debug("Send message opcode {} to Client",opcode);
@@ -56,12 +69,14 @@ public class ChannelServices {
         return StatusCode.SUCCESS;
     }
 
+
+
     public int handleLoginClient(LoginUserMessage message) throws IOException {
         String userName = message.getUserName();
         String messageToClient = null;
         int opcode = Opcodes.NONE;
 
-        int statusCode = this.usersList.loginUser(userName);
+        int statusCode = this.usersList.loginUser(userName, socket);
 
         switch(statusCode){
             case StatusCode.INVALID_USERNAME:{
@@ -91,7 +106,7 @@ public class ChannelServices {
         }
 
         if(opcode != Opcodes.NONE){
-            sendMessageToClient(opcode, messageToClient);
+            sendMessageToClient(opcode, messageToClient,userName);
         }
 
         return statusCode;
@@ -107,7 +122,7 @@ public class ChannelServices {
 
                     logger.error("Cannot signup client - Account already exists");
                     String message = "You are trying to signup to an existing account\nIf you cannot login, then contact the administrators";
-                    sendMessageToClient(Opcodes.ACTION_FAILED, message);
+                    sendMessageToClient(Opcodes.ACTION_FAILED, message, null);
                     break;
                 }
             }
@@ -121,18 +136,17 @@ public class ChannelServices {
 
     public int handleAddBid(AddBidMessage message) throws IOException {
 
-        AddBidMessage addBid = message;
-        Long itemId = addBid.getAuctionItemId();
-        User user = usersList.findByUserName(userId);
-        AuctionItem auctionItem = this.auctionItemsList.findById(addBid.getAuctionItemId());
+        Long itemId = message.getAuctionItemId();
+        UserInList user = usersList.findByUserName(message.getUserId());
+        AuctionItem auctionItem = this.auctionItemsList.findById(itemId);
         int statusCode;
         int opcode;
         String messageToClient;
 
-        if(auctionItem.addBidder(user,addBid.getBidValue())){
+        if(auctionItem.addBidder(user.getUser(),message.getBidValue())){
             /* send updated bidders list to client */
             opcode = Opcodes.AUCTION_ITEM;
-            messageToClient = this.auctionItemsList.findById(addBid.getAuctionItemId()).toPrettyString();
+            messageToClient = this.auctionItemsList.findById(message.getAuctionItemId()).toPrettyString();
             statusCode = StatusCode.SUCCESS;
         }else{
             opcode = Opcodes.ACTION_FAILED;
@@ -155,7 +169,7 @@ public class ChannelServices {
     }
 
     public Optional<User> getUser() {
-        return Optional.ofNullable(this.usersList.findByUserName(userId));
+        return Optional.ofNullable(this.usersList.findByUserName(userId).getUser());
     }
 
     private String getAuctionInstructions(){

@@ -9,13 +9,14 @@ import authenticate.HttpAuthApi;
 import authenticate.HttpStatusCode;
 import authenticate.InvalidUserNames;
 
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class UsersList extends AbstractUsersList {
     private final static Logger logger = LoggerFactory.getLogger(UsersList.class);
-    private Map<String, User> usersList;
+    private Map<String, UserInList> usersList;
 
     public UsersList() {
         usersList = new TreeMap<>();
@@ -44,7 +45,7 @@ public class UsersList extends AbstractUsersList {
                 }
             }
         }else{
-            Map userData = (Map) responseObject.getData();
+            Map userData = responseObject.getData();
             User user = new User(
                     (String)userData.get("userName"),
                     (String)userData.get("firstName"),
@@ -58,7 +59,7 @@ public class UsersList extends AbstractUsersList {
     }
 
     @Override
-    public int loginUser(String userName) {
+    public int loginUser(String userName, Socket socket) {
         int statusCode = StatusCode.INVALID_USERNAME;
 
         boolean isValidUserName = InvalidUserNames.isUserNameValid(userName);
@@ -68,8 +69,8 @@ public class UsersList extends AbstractUsersList {
             statusCode = (int) returnObj.get("statusCode");
 
             if(statusCode == StatusCode.SUCCESS){
-
-                usersList.put(userName, (User)returnObj.get("user"));
+                UserInList userInList = new UserInList((User)returnObj.get("user"), socket);
+                usersList.put(userName, userInList);
                 logger.debug("Added user {} to list", userName);
             }
         }
@@ -77,7 +78,7 @@ public class UsersList extends AbstractUsersList {
     }
 
     @Override
-    public User findByUserName(String userName) {
+    public UserInList findByUserName(String userName) {
         return usersList.get(userName);
     }
 

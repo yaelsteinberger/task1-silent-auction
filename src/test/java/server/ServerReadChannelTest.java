@@ -198,50 +198,6 @@ public class ServerReadChannelTest {
         assertThat(commandToClient.getOpcode(), is(expectedOpcode));
     }
 
-    @Test
-    public void handleReadAddBidCommandTest() throws IOException {
-
-        //Given
-        /* first "connect" user to channel by logging in */
-        MockAuthServer.resetServer();
-
-        Command command = MockCommands.getMockLoginCommand(users[0]);
-        HttpStatusCode httpStatusCode = HttpStatusCode.OK_200;
-        MockAuthServer.isUserAuthExpectations(users[0], httpStatusCode);
-        serverReadChannel.handleRead(command);
-
-        Map expectations = new HashMap(){{
-            put("SUCCESS",
-                    new HashMap(){{
-                        put("bidValue",4600L);
-                        put("statusCode",StatusCode.SUCCESS);
-                        put("incrementListSize",1);
-                        put("opcodeToClient",Opcodes.AUCTION_ITEM);
-                    }});
-            put("INVALID_BELOW_MAX",
-                    new HashMap(){{
-                        put("bidValue",4300L);
-                        put("statusCode",StatusCode.INVALID_VALUE);
-                        put("incrementListSize",0);
-                        put("opcodeToClient",Opcodes.ACTION_FAILED);;
-                    }});
-            put("INVALID_NOT_FOLLOW_INCREMENT",
-                    new HashMap(){{
-                        put("bidValue",4700L);
-                        put("statusCode",StatusCode.INVALID_VALUE);
-                        put("incrementListSize",0);
-                        put("opcodeToClient",Opcodes.ACTION_FAILED);;
-                    }});
-        }};
-
-        Long itemId = 2L;
-        Set<String> keys = expectations.keySet();
-        for (String key : keys) {
-            generateBiddersListInAuctionItem(itemId);
-            runTestReadAddBidCommand(itemId,(Map) expectations.get(key));
-        }
-    }
-
     private void runTestReadLoginCommand(
             User user,
             HttpStatusCode httpStatusCode,
@@ -283,28 +239,6 @@ public class ServerReadChannelTest {
         //Then
         assertThat(status, is(expectation.get("status")));
         assertThat(commandToClient.getOpcode(), is(expectation.get("opcodeToClient")));
-    }
-
-    private void runTestReadAddBidCommand(Long itemId, Map expectations) throws IOException {
-
-        /* reset bidders list in auctionItem */
-        generateBiddersListInAuctionItem(itemId);
-
-        // When
-        int sizeBefore = auctionItemsList.findById(itemId).getBiddersList().size();
-
-        Command command = MockCommands.getMockAddBidCommand(itemId, (Long) expectations.get("bidValue"));
-        int statusCode = serverReadChannel.handleRead(command);
-        int sizeAfter = auctionItemsList.findById(itemId).getBiddersList().size();
-        /* check what was sent to client through socket */
-        Command commandToClient = mockClientSocket.getOutPutStreamCommand();
-
-        // Then
-        int expectedSize = sizeBefore + (Integer)expectations.get("incrementListSize");
-
-        assertThat(statusCode, is((Integer)expectations.get("statusCode")));
-        assertThat(sizeAfter, is(expectedSize));
-        assertThat(commandToClient.getOpcode(), is(expectations.get("opcodeToClient")));
     }
 }
 

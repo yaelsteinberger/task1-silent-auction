@@ -27,12 +27,12 @@ public class MockCommands {
         return new Command(opcode,message);
     }
 
-    public static Command getMockAddBidCommand(Long AuctionItemId, Long bidValue){
-        Integer opcode = Opcodes.ADD_BID;
-        AddBidMessage message = new AddBidMessage(AuctionItemId,bidValue);
-
-        return new Command(opcode,message);
-    }
+//    public static Command getMockAddBidCommand(Long AuctionItemId, Long bidValue){
+//        Integer opcode = Opcodes.ADD_BID;
+//        AddBidMessage message = new AddBidMessage(AuctionItemId,bidValue);
+//
+//        return new Command(opcode,message);
+//    }
 
     public static Command getMockGetAuctionListCommand(){
         Integer opcode = Opcodes.GET_AUCTION_LIST;

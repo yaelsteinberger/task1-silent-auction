@@ -1,5 +1,6 @@
 package client.channelHandler;
 import activemq.Producer;
+import client.entity.ClientId;
 import client.entity.OpcodeCommandsQuestions;
 import client.entity.Question;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -93,6 +94,7 @@ public class ChannelServices {
         Question currentQuestion = null;
         boolean isRun = true;
         String dataGram = "";
+        String clientId = (ClientId.getClientId() == null) ? "YOU" : ClientId.getClientId();
 
         while(isRun) {
             /* get input from keyboard */
@@ -100,7 +102,7 @@ public class ChannelServices {
 
             switch(statusCode){
                 case StatusCode.MENU:{
-                    System.out.println("[YOU] > ");
+                    System.out.println("[" + clientId + "] > ");
                     dataGram = kbd.readLine().trim();
 
                     result = ParseUserInputData.parseOpcodeFromInputData(dataGram);
@@ -183,6 +185,7 @@ public class ChannelServices {
             }
             case Opcodes.ADD_BID:{
                 data.put("type", "AddBidMessage");
+                data.put("userId",ClientId.getClientId());
                 message = mapper.convertValue(data, AddBidMessage.class);
                 break;
             }

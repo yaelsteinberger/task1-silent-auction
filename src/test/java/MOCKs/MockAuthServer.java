@@ -28,7 +28,7 @@ public class MockAuthServer {
     }
 
     public static void startServer() throws InterruptedException {
-        Thread.sleep(1000);// not sure why in multiple tests class it stops connecting the socket. this is the only solution at the moment
+        Thread.sleep(2000);// not sure why in multiple tests class it stops connecting the socket. this is the only solution at the moment
         mockServer = startClientAndServer(port);
     }
 

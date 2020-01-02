@@ -76,12 +76,12 @@ public class HandleReadChannel {
                 break;
             }
 
-            case Opcodes.ADD_BID:{
-                logger.debug("Handling read command: ADD_BID");
-                PrintHelper.printPrettyInRed(message);
-                statusCode = StatusCode.SUCCESS;//this.channelServices.handleAddBid((AddBidMessage) message);
-                break;
-            }
+//            case Opcodes.ADD_BID:{
+//                logger.debug("Handling read command: ADD_BID");
+//                PrintHelper.printPrettyInRed(message);
+//                statusCode = StatusCode.SUCCESS;//this.channelServices.handleAddBid((AddBidMessage) message);
+//                break;
+//            }
 
             case Opcodes.WINNER_ANNOUNCEMENT:{
                 //TODO
