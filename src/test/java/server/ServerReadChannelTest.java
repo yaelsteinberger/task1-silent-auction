@@ -34,7 +34,7 @@ public class ServerReadChannelTest {
 
 
     @BeforeClass
-    public static void setup() throws InterruptedException {
+    public static void setup() throws IOException {
 
         //Given
         MockAuthServer.startServer();

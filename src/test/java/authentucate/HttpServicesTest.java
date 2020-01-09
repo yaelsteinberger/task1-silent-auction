@@ -30,7 +30,7 @@ public class HttpServicesTest {
     private static User user;
 
     @BeforeClass
-    static public void setup() throws InterruptedException {
+    static public void setup() throws IOException {
 
         //Given
         MockAuthServer.startServer();
