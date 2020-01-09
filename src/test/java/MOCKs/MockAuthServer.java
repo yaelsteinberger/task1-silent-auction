@@ -1,15 +1,16 @@
 package MOCKs;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import authenticate.PathNames;
 import entity.User;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Delay;
 import org.mockserver.model.HttpStatusCode;
-import authenticate.PathNames;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.model.HttpRequest.request;
@@ -17,27 +18,25 @@ import static org.mockserver.model.HttpResponse.response;
 
 
 public class MockAuthServer {
-
-    private static String host = MockTestProperties.getAuthServerHost();
-    private static Integer port = MockTestProperties.getAuthServerPort();
+    private static String host;
+    private static Integer port;
     private static ClientAndServer mockServer;
 
-    public static void setAttributes (String myHost, Integer myPort)  {
-        host = myHost;
-        port = myPort;
-    }
+    public static void startServer() throws IOException {
+        MockTestProperties.reset();
+        host = MockTestProperties.getAuthServerHost();
+        port = MockTestProperties.getAuthServerPort();
 
-    public static void startServer() throws InterruptedException {
-        Thread.sleep(2000);// not sure why in multiple tests class it stops connecting the socket. this is the only solution at the moment
         mockServer = startClientAndServer(port);
+
     }
 
-    public static void stopServer() throws JsonProcessingException {
+    public static void stopServer()  {
         mockServer.stop();
     }
 
     public static void resetServer(){
-        new MockServerClient(host, port).reset();
+       new MockServerClient(host, port).reset();
     }
 
 

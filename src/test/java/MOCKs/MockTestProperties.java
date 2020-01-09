@@ -2,27 +2,42 @@ package MOCKs;
 
 import client.ClientProperties;
 import server.ServerProperties;
+import util.PrintHelper;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.util.Properties;
 
 public class MockTestProperties {
     private static final String testPropFilePath = "src\\test\\resources\\mockConfig.properties";
-    private static Properties properties = readConfigPropertiesFile();
+    private static Properties properties;
+
+    static {
+        try {
+            properties = generateProperties();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static Integer authServerPort;
     private static String authServerHost;
     private static String authServerUrl;
     private static Integer serverPort;
     private static String serverHost;
 
+    public static void reset() throws IOException {
+        /* force generating properties to set new arbitrary props to the relevant ones (e.g. auth port) */
+        properties = generateProperties();
+    }
+
     public static Properties getProperties() {
         return properties;
     }
 
     public static Integer getAuthServerPort() {
-        readConfigPropertiesFile();
         return authServerPort;
     }
 
@@ -42,7 +57,7 @@ public class MockTestProperties {
         return serverHost;
     }
 
-    private static Properties readConfigPropertiesFile(){
+    private static Properties generateProperties() throws IOException {
         try ( InputStream inputStream = new FileInputStream(testPropFilePath)) {
             properties = new Properties();
             properties.load(inputStream);
@@ -57,8 +72,18 @@ public class MockTestProperties {
         serverPort = Integer.parseInt((String)properties.get("server.port"));
         serverHost = (String)properties.get("server.host");
 
-        setAppProperties();
+        /* Generate arbitrary props for auth server (port, url) */
+        ServerSocket serverSocket = new ServerSocket(0);
+        Integer arbAuthPort = serverSocket.getLocalPort();
+        authServerUrl = authServerUrl.replace(String.valueOf(authServerPort),String.valueOf(arbAuthPort));
+        authServerPort = arbAuthPort;
+        properties.setProperty("authServer.url", authServerUrl);
+        properties.setProperty("authServer.port", String.valueOf(arbAuthPort));
+        serverSocket.close();
 
+
+
+        setAppProperties();
         return properties;
     }
 
