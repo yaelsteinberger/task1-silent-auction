@@ -27,7 +27,7 @@ public class UsersListTest {
 
 
     @BeforeClass
-    static public void setup() throws InterruptedException {
+    static public void setup() throws IOException {
 
         //Given
         MockAuthServer.startServer();
@@ -35,7 +35,7 @@ public class UsersListTest {
     }
 
     @AfterClass
-    static public void tearDown() throws JsonProcessingException {
+    static public void tearDown() {
         MockAuthServer.stopServer();
     }
 
